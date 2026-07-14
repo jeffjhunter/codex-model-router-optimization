@@ -1,0 +1,40 @@
+name: Bug report
+description: Report a reproducible installer, verifier, packaging, or documentation defect.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: checkboxes
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and removed secrets and private repository content.
+          required: true
+        - label: I ran `routerctl.py doctor` and `routerctl.py verify --json` when applicable.
+          required: true
+  - type: input
+    attributes:
+      label: CMRO version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      description: Operating system, Python, Git, Codex version, filesystem, and permission mode where relevant.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction
+      description: Minimal disposable-repository steps, exact command, exit code, and redacted output.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected and observed behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional evidence
+      description: Redacted logs, fixture links, or screenshots. Do not include credentials or proprietary source.

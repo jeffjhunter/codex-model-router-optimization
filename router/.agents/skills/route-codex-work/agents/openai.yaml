@@ -1,0 +1,7 @@
+interface:
+  display_name: "Route Codex Work"
+  short_description: "Route tasks through bounded agent review"
+  default_prompt: "Use $route-codex-work to plan, route, verify, and review this task with evidence."
+
+policy:
+  allow_implicit_invocation: false

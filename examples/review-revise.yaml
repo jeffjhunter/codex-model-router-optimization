@@ -1,0 +1,31 @@
+schema: "cmro.review.v1"
+run_id: "cmro-example-7f3c"
+plan_version: 1
+reviewer:
+  id: "agent-example-review-01"
+  route: "standard_reviewer"
+decision: "revise"
+criteria:
+  - ac_id: "AC-001"
+    status: "pass"
+    evidence: "Independent invocation produced valid JSON with the documented keys."
+  - ac_id: "AC-002"
+    status: "fail"
+    evidence: "Redirected default output is missing the historical final newline."
+  - ac_id: "AC-003"
+    status: "pass"
+    evidence: "Focused test command exited 0, but it does not cover redirected bytes."
+  - ac_id: "AC-004"
+    status: "pass"
+    evidence: "Diff contains only authorized paths and no external action was observed."
+findings:
+  - id: "F-001"
+    severity: "medium"
+    ac_ids: ["AC-002", "AC-003"]
+    evidence: "Redirecting the command without --json produces output without the prior trailing newline."
+    requested_outcome: "Restore byte-compatible default output and add a regression assertion for redirected bytes."
+verification:
+  - command: "python -m unittest tests.test_status"
+    exit_code: 0
+    result: "pass"
+limitations: []

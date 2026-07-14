@@ -1,0 +1,7 @@
+# This profile intentionally leaves the root model unpinned.
+# Select the coordinator model in Codex or add a project-level model explicitly.
+
+[agents]
+max_threads = 4
+max_depth = 1
+interrupt_message = true

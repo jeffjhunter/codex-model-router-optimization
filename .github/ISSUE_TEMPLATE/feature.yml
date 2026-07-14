@@ -1,0 +1,27 @@
+name: Feature request
+description: Propose a scoped improvement to safety, portability, routing, evaluation, or documentation.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: Problem
+      description: What concrete user or safety problem is not addressed today?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed outcome
+      description: Describe observable behavior, not only an implementation preference.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Trust-boundary and compatibility impact
+      description: Permissions, data movement, model availability, platforms, upgrades, or migration concerns.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Alternatives and evaluation
+      description: Other approaches and how success should be measured.

@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.13"]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Check generated payload manifest
+        run: python scripts/build_manifest.py --check
+      - name: Compile Python
+        run: python -m compileall -q routerctl.py scripts tests
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+      - name: Check repository integrity
+        run: python scripts/check_repo.py
+
+  release-smoke:
+    name: Archive smoke / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - name: Build deterministic archive
+        run: python scripts/build_release.py
+      - name: Verify extracted archive and installer round trip
+        shell: python
+        run: |
+          import hashlib
+          import pathlib
+          import subprocess
+          import sys
+          import tempfile
+          import zipfile
+
+          dist = pathlib.Path("dist")
+          archives = list(dist.glob("*.zip"))
+          assert len(archives) == 1, archives
+          archive = archives[0]
+          version = pathlib.Path("VERSION").read_text(encoding="utf-8").strip()
+          prefix = f"codex-model-router-optimization-{version}/"
+          expected = (dist / "SHA256SUMS").read_text(encoding="utf-8").split()[0]
+          assert hashlib.sha256(archive.read_bytes()).hexdigest() == expected
+
+          with tempfile.TemporaryDirectory(prefix="cmro-archive-") as temporary:
+              temporary_path = pathlib.Path(temporary)
+              with zipfile.ZipFile(archive) as handle:
+                  names = handle.namelist()
+                  assert names and all(name.startswith(prefix) for name in names)
+                  assert all("\\" not in name for name in names)
+                  assert prefix + "router/.codex/config.toml" in names
+                  assert prefix + "router/.agents/skills/route-codex-work/SKILL.md" in names
+                  assert prefix + "LICENSE" in names
+                  handle.extractall(temporary_path)
+
+              extracted = temporary_path / prefix.rstrip("/")
+              subprocess.run([sys.executable, "scripts/check_repo.py"], cwd=extracted, check=True)
+              target = temporary_path / "target repo"
+              target.mkdir()
+              subprocess.run(["git", "init", "--quiet", str(target)], check=True)
+              cli = extracted / "routerctl.py"
+              for command in ("install", "verify", "uninstall"):
+                  subprocess.run(
+                      [sys.executable, str(cli), command, "--target", str(target)],
+                      cwd=extracted,
+                      check=True,
+                  )
+          print(f"Verified and round-tripped {archive} with {len(names)} portable entries")

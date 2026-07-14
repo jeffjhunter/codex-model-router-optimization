@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If this project helps your work, cite the repository and credit the concept inspiration documented in CREDITS.md."
+title: "Codex Model Router Optimization"
+type: software
+version: 1.0.0
+date-released: 2026-07-13
+authors:
+  - family-names: "Hunter"
+    given-names: "Jeff J."
+    alias: "jeffjhunter"
+repository-code: "https://github.com/jeffjhunter/codex-model-router-optimization"
+url: "https://github.com/jeffjhunter/codex-model-router-optimization"
+license: MIT
+keywords:
+  - Codex
+  - multi-agent
+  - model routing
+  - software agents

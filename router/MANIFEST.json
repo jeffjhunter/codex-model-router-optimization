@@ -1,0 +1,17 @@
+{
+  "files": {
+    ".agents/skills/route-codex-work/SKILL.md": "22ba3796f6f1ff8387c69b3275221e138ec5fb99d23b5bb6c341176c7854d4fc",
+    ".agents/skills/route-codex-work/agents/openai.yaml": "09cc73c54a1500f7988beba7633f6289d885e58b6d0c0a058d8fa1049265a06a",
+    ".agents/skills/route-codex-work/references/protocol.md": "9c160b163ecec4f9592e5bf21118e3647834c3656b0e0d4aa494ccee7600a82b",
+    ".agents/skills/route-codex-work/references/routing.md": "641f73347bdbd22fb3ffa513258cd4a5d284f00250b21338fdeb9625e3120605",
+    ".codex/agents/balanced_worker.toml": "11303ccbc088516c9bdb800bbd52ed1bede7a663321522a370f6822ba78e412d",
+    ".codex/agents/deep_reviewer.toml": "164e94c9c9658d3562a297fb192caef323b9de8f6645c45e063d18d57772101e",
+    ".codex/agents/deep_worker.toml": "f363cf0b88e9fd087a1030ed4177ce1005063e9ec5c76c788534aab10a090f90",
+    ".codex/agents/fast_worker.toml": "e25fe02b3c5085966b80ad13558612e7c4326db98a98c3ca6f066140022dace7",
+    ".codex/agents/standard_reviewer.toml": "35dbdcf416f623866615982a565c2bbb82c18813a2577d5eba6f1749d782e531",
+    ".codex/config.toml": "035ec24ddb2def9ed46f3e484ba9b1c0dc9540150f89bb350090a51a17e6b027",
+    "AGENTS.addendum.md": "2263fe3c94a19002e2696ad1fb6bc392d142ef5dea2a5dead986cf4d53feec5d"
+  },
+  "format": 1,
+  "version": "1.0.0"
+}

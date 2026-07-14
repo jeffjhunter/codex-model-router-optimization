@@ -1,0 +1,42 @@
+schema: "cmro.plan.v1"
+run_id: "cmro-example-7f3c"
+plan_version: 1
+request: "Add a backward-compatible JSON option to the local status command."
+baseline:
+  kind: "git"
+  value: "0123456789abcdef0123456789abcdef01234567"
+requirements:
+  - id: "RQ-001"
+    text: "Expose machine-readable JSON status output."
+  - id: "RQ-002"
+    text: "Preserve existing text output and exit behavior."
+  - id: "RQ-003"
+    text: "Add focused automated coverage."
+  - id: "RQ-004"
+    text: "Keep work inside the local repository."
+acceptance:
+  - id: "AC-001"
+    rq_ids: ["RQ-001"]
+    condition: "The status command accepts --json and emits the documented schema."
+    verification: "Run the focused CLI test and parse stdout as JSON."
+  - id: "AC-002"
+    rq_ids: ["RQ-002"]
+    condition: "Invoking the command without --json preserves byte-for-byte output and exits."
+    verification: "Run the existing golden-output test."
+  - id: "AC-003"
+    rq_ids: ["RQ-003"]
+    condition: "Focused JSON and compatibility tests pass."
+    verification: "Run python -m unittest tests.test_status."
+  - id: "AC-004"
+    rq_ids: ["RQ-004"]
+    condition: "Only authorized repository files change and no external action occurs."
+    verification: "Inspect the baseline diff and tool history."
+scope:
+  allowed_paths: ["src/status.py", "tests/test_status.py", "docs/cli.md"]
+  prohibited_actions: ["publishing", "deployment", "external messages"]
+  authority: "local repository only"
+routing:
+  worker: "balanced_worker"
+  reviewer: "standard_reviewer"
+  rationale: "Multi-file behavior and regression risk with no deep-impact boundary."
+attempt_limit: 3

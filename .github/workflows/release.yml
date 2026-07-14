@@ -1,0 +1,174 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify tag / ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.13"]
+    steps:
+      - name: Check out tagged source without credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Check generated payload manifest
+        run: python scripts/build_manifest.py --check
+      - name: Compile Python
+        run: python -m compileall -q routerctl.py scripts tests
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+      - name: Check repository integrity
+        run: python scripts/check_repo.py
+
+  build:
+    name: Build release assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: verify
+    steps:
+      - name: Check out tagged source without credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - name: Validate annotated tag, version, and main ancestry
+        shell: bash
+        run: |
+          VERSION="$(cat VERSION)"
+          test "${GITHUB_REF_NAME}" = "v${VERSION}"
+          test "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" = "tag"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor "${GITHUB_SHA}" refs/remotes/origin/main
+      - name: Build deterministic archive
+        run: python scripts/build_release.py
+      - name: Upload release assets for isolated verification
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-assets
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  archive-test:
+    name: Test release archive / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - name: Download untrusted release assets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-assets
+          path: dist
+      - name: Verify extracted archive and installer round trip
+        shell: python
+        run: |
+          import hashlib
+          import pathlib
+          import subprocess
+          import sys
+          import tempfile
+          import zipfile
+
+          dist = pathlib.Path("dist")
+          archives = list(dist.glob("*.zip"))
+          assert len(archives) == 1, archives
+          archive = archives[0]
+          checksum = (dist / "SHA256SUMS").read_text(encoding="utf-8").split()
+          assert len(checksum) == 2 and checksum[1] == archive.name, checksum
+          assert hashlib.sha256(archive.read_bytes()).hexdigest() == checksum[0]
+
+          with tempfile.TemporaryDirectory(prefix="cmro-release-") as temporary:
+              temporary_path = pathlib.Path(temporary)
+              with zipfile.ZipFile(archive) as handle:
+                  names = handle.namelist()
+                  roots = {name.split("/", 1)[0] for name in names if name}
+                  assert len(roots) == 1, roots
+                  assert all("\\" not in name for name in names)
+                  handle.extractall(temporary_path)
+              extracted = temporary_path / roots.pop()
+              subprocess.run([sys.executable, "scripts/check_repo.py"], cwd=extracted, check=True)
+              target = temporary_path / "target repo"
+              target.mkdir()
+              subprocess.run(["git", "init", "--quiet", str(target)], check=True)
+              cli = extracted / "routerctl.py"
+              for command in ("install", "verify", "uninstall"):
+                  subprocess.run(
+                      [sys.executable, str(cli), command, "--target", str(target)],
+                      cwd=extracted,
+                      check=True,
+                  )
+          print(f"Verified and round-tripped {archive} with {len(names)} portable entries")
+
+  publish:
+    name: Attest and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: archive-test
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download verified release assets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-assets
+          path: dist
+      - name: Validate release asset names and checksum
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          test -f "dist/codex-model-router-optimization-${VERSION}.zip"
+          test "$(awk '{print $2}' dist/SHA256SUMS)" = "codex-model-router-optimization-${VERSION}.zip"
+          (cd dist && sha256sum --check SHA256SUMS)
+          echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
+      - name: Attest release archive
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4
+        with:
+          subject-path: dist/codex-model-router-optimization-${{ env.VERSION }}.zip
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "dist/codex-model-router-optimization-${VERSION}.zip" \
+            "dist/SHA256SUMS" \
+            --verify-tag \
+            --generate-notes \
+            --title "Codex Model Router Optimization ${GITHUB_REF_NAME}"
