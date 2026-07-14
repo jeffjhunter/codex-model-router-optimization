@@ -1,55 +1,51 @@
 # Routing policy
 
-Routing minimizes cost and latency only after satisfying the task’s risk envelope. It does not route by desired output length.
+CMRO spends Sol tokens on the contract and gates, sends bulk production to Luna or Terra, and routes by ambiguity and verifiability rather than output length.
 
-## Decision sequence
+## Fixed roles
 
-1. Identify authority and external effects.
-2. Identify sensitive domains: authentication, authorization, secrets, privacy, durable data, production, billing, or destructive operations.
-3. Determine ambiguity, dependency count, integration surface, and regression risk.
-4. Determine whether verification is deterministic and exhaustive.
-5. Choose the lowest route that covers every material concern.
+| Role | Model | Effort | Responsibility |
+| --- | --- | --- | --- |
+| Root coordinator | `gpt-5.6-sol` | xhigh | Define success, select route, retain state, apply final gate |
+| Luna writer | `gpt-5.6-luna` | medium | Clear, repeatable, deterministic transformations |
+| Terra writer | `gpt-5.6-terra` | high | Everyday multi-file, tool-heavy, ambiguous, recovery, and high-impact work |
+| Sol reviewer | `gpt-5.6-sol` | xhigh | Independent read-only evidence review |
 
-## Worker matrix
+## Luna or Terra score
 
-| Signal | Fast | Balanced | Deep |
-| --- | :---: | :---: | :---: |
-| Clear, mechanical transformation | ✓ | ✓ | ✓ |
-| Deterministic exhaustive checks | required | preferred | preferred |
-| Several dependent files or tools |  | ✓ | ✓ |
-| Meaningful design judgment |  | ✓ | ✓ |
-| Ordinary integration/regression risk |  | ✓ | ✓ |
-| Authentication, secrets, privacy |  |  | ✓ |
-| Destructive or hard-to-reverse effects |  |  | ✓ |
-| Data migration or production state |  |  | ✓ |
-| Cross-system authority or billing |  |  | ✓ |
+Give one point for each signal:
 
-Choose the stronger route when evidence is incomplete. A stronger model never expands the user’s authorization.
+1. Material ambiguity.
+2. Several dependent steps or files.
+3. Tool use or environment inspection.
+4. Recovery from partial failure.
+5. Judgment-heavy synthesis or regression risk.
 
-## Reviewer matrix
-
-Use `standard_reviewer` for fast and balanced tasks unless a deep-risk concern appears. Use `deep_reviewer` for deep tasks and any artifact where security, privacy, authorization, irreversible effects, or data integrity are material.
-
-The reviewer receives the original request, current plan, baseline, artifact or diff, and worker report. It should rerun safe checks or inspect source directly rather than accepting the report at face value.
+Route 0–1 to Luna and 2–5 to Terra. When evidence is incomplete, choose Terra. High-impact work stays with Terra but adds explicit threat, authority, rollback, data-integrity, and operational checks to the plan and Sol review. A stronger route never expands authorization.
 
 ## Examples
 
-| Task | Expected route | Reason |
+| Task | Score and route | Reason |
 | --- | --- | --- |
-| Rename images using a supplied one-to-one map | Fast | Mechanical, reversible, and exhaustively checkable |
-| Convert a CSV to a fixed JSON schema | Fast | Deterministic transformation with schema validation |
-| Add pagination to an internal list page | Balanced | Multi-file behavior and regression risk |
-| Research and draft a cited technical comparison | Balanced | Tool use, source judgment, and synthesis |
-| Repair an authorization bypass | Deep + deep review | Security boundary and adversarial input |
-| Plan a production database migration | Deep + deep review | Durable data, rollback, and operational risk |
+| Rename images from a supplied bijective map | 1 → Luna | Mechanical and exhaustively checkable |
+| Convert a CSV to a fixed schema | 1 → Luna | Deterministic transformation and validation |
+| Add pagination to an internal list | 3 → Terra | Multiple files, tools, regression risk |
+| Draft a cited technical comparison | 3 → Terra | Tools, source judgment, synthesis |
+| Repair an authorization bypass | Terra + adversarial Sol review | Security boundary; local authority remains fixed |
+| Plan a production migration | Terra + adversarial Sol review | Durable data, rollback, and operational risk |
+
+## Runtime identity gate
+
+Exact TOML files and hashes prove the intended configuration. They do not prove entitlement or the model actually selected for a spawned session. A verified pilot must separately record client/session evidence showing:
+
+- root: Sol;
+- writer: the selected Luna or Terra custom agent/model;
+- reviewer: a different Sol session.
+
+A prompt label, thread name, agent self-report, or filename is not independent proof. If the client does not expose model identity, record `not_verified` and stop at `needs_human_review` rather than marketing the run as verified model routing.
 
 ## Escalation
 
-- Escalate fast to balanced when ambiguity, broad tool use, or regression risk appears.
-- Escalate balanced to deep when a deep-risk boundary appears or reasoning complexity blocks safe work.
-- Do not escalate model depth to compensate for missing credentials, user choices, permission, or production context. Stop for human review.
-- Never leave the old and new writer active together. Preserve evidence, close the old writer if possible, and hand the current plan to the replacement.
-
-## Why the default models look this way
-
-The profile uses `gpt-5.6-terra` for the fast route and `gpt-5.6` at increasing reasoning levels for demanding workers and reviewers. Current OpenAI guidance describes Terra as the faster, lower-cost option for lighter supporting work and recommends stronger GPT-5.6 configurations for ambiguous, multi-step work. Availability and supported effort levels can change; see [compatibility](compatibility.md).
+- Escalate Luna to Terra when ambiguity, dependent edits, broad tools, recovery, or regression risk appears.
+- Do not use a stronger model to compensate for missing permission, credentials, policy, or production context; stop for human review.
+- Never leave old and replacement writers active together. Preserve evidence and hand off explicitly.

@@ -5,9 +5,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB.svg)](https://www.python.org/)
 
-Risk-aware coordinator–worker–reviewer orchestration for Codex.
+Cost-aware Sol → Luna/Terra → Sol model routing for Codex.
 
-Codex Model Router Optimization (CMRO) is a repo-scoped Codex skill and custom-agent profile. It routes explicit workflow runs to a fast, balanced, or deep worker, requires independent evidence review, returns actionable feedback to the retained writer, and stops after a bounded number of attempts. It is **not** an API gateway, network proxy, deterministic scheduler, or official OpenAI project.
+Codex Model Router Optimization (CMRO) is a repo-scoped Codex skill and custom-agent profile. Sol defines success and owns the final gate, Luna handles clear repeatable work, Terra handles everyday multi-file and tool-heavy work, and a separate read-only Sol reviews the evidence. Failed criteria return to the retained Luna/Terra writer for at most three attempts. It is **not** an API gateway, network proxy, deterministic scheduler, or official OpenAI project.
 
 > [!IMPORTANT]
 > This is an independent community project. It is not affiliated with or endorsed by OpenAI or Matt Farmer. Native skill instructions guide agent behavior but do not create a guaranteed state machine or hard security boundary.
@@ -26,32 +26,26 @@ Large coding tasks fail in predictable ways: the plan stays vague, the implement
 ```mermaid
 flowchart LR
     U["User request"] --> C["Root coordinator"]
-    C -->|"low risk + deterministic"| F["Fast worker"]
-    C -->|"normal implementation"| B["Balanced worker"]
-    C -->|"high-impact work"| D["Deep worker"]
-    F --> R["Independent reviewer"]
+    C -->|"0–1 routing points"| F["Luna worker"]
+    C -->|"2–5 points / high impact"| B["Terra worker"]
+    F --> R["Independent Sol reviewer"]
     B --> R
-    D --> DR["Deep reviewer"]
     R -->|"revise"| S["Same worker ID"]
-    DR -->|"revise"| S
     S --> R
     R -->|"accept"| G["Root final gate"]
-    DR -->|"accept"| G
     R -->|"blocked / attempt limit"| H["Human review"]
-    DR -->|"blocked / attempt limit"| H
 ```
 
 ## Routes
 
 | Route | Default model | Effort | Use it for |
 | --- | --- | --- | --- |
-| `fast_worker` | `gpt-5.6-terra` | low | Clear, reversible transformations with deterministic checks |
-| `balanced_worker` | `gpt-5.6` | medium | Ordinary implementation, tool use, multi-file work, regression risk |
-| `deep_worker` | `gpt-5.6` | high | Security, privacy, migrations, destructive effects, complex architecture |
-| `standard_reviewer` | `gpt-5.6` | high | Independent correctness, scope, and regression review |
-| `deep_reviewer` | `gpt-5.6` | xhigh | Adversarial review of high-impact work |
+| `root` | `gpt-5.6-sol` | xhigh | Contract, route selection, model-identity gate, final decision |
+| `luna_worker` | `gpt-5.6-luna` | medium | Clear, repeatable transformations with deterministic checks |
+| `terra_worker` | `gpt-5.6-terra` | high | Multi-file work, tools, ambiguity, recovery, and high-impact implementation |
+| `sol_reviewer` | `gpt-5.6-sol` | xhigh | Independent evidence review; adversarial checks when risk requires them |
 
-Model access varies by account and rollout. Confirm these IDs in your Codex model picker before a serious run. The project intentionally does **not** pin the root model, so installation does not change the model used by every ordinary prompt in the repository.
+Model access varies by account and rollout. Confirm these IDs in your Codex model picker before a serious run. CMRO pins the project root to Sol so the coordinator identity is automatic; that also changes ordinary Codex prompts in the target repository. Use the documented opt-in variation if that project-wide effect is undesirable.
 
 ## Five-minute start
 
@@ -101,9 +95,9 @@ The installer rejects unexpected payload files, verifies SHA-256 hashes, refuses
 
 ## What is and is not verified
 
-The test suite verifies payload integrity, TOML parsing, installation conflicts, Git-root checks, idempotence, config staging, `AGENTS.md` merging, tamper detection, uninstall ownership, paths with spaces, and portable release archives across Windows, macOS, and Linux.
+The test suite verifies exact Sol/Luna/Terra model pins, payload integrity, TOML parsing, installation conflicts, Git-root checks, idempotence, config staging, `AGENTS.md` merging, tamper detection, uninstall ownership, paths with spaces, and portable release archives across Windows, macOS, and Linux.
 
-It does not prove that a native Codex run will follow every transition, that a configured model is entitled for your account, or that a reviewer sandbox cannot be overridden by the parent runtime. See [limitations](docs/limitations.md) and the [security model](docs/security-model.md).
+It does not prove that a native Codex run used the configured model, followed every transition, has model entitlement for your account, or preserved a reviewer sandbox against parent runtime overrides. A verified pilot additionally needs independent client/session evidence of Sol → Luna/Terra → Sol. See [limitations](docs/limitations.md) and the [security model](docs/security-model.md).
 
 ## Documentation
 
@@ -119,7 +113,7 @@ It does not prove that a native Codex run will follow every transition, that a c
 
 ## Credits
 
-The practical coordinator–worker–reviewer pattern was inspired by Matt Farmer’s article, [“Codex Model Routing: Build a Sol–Terra Review Loop”](https://mattfarmer.ai/codex-model-routing). This repository is an independently written implementation with different tooling, role names, defaults, contracts, and safety design. Read [CREDITS.md](CREDITS.md) for the full attribution.
+The Sol → Luna/Terra → Sol pattern was inspired by Matt Farmer’s article, [“Codex Model Routing: Build a Sol–Terra Review Loop”](https://mattfarmer.ai/codex-model-routing). This repository is an independently written implementation with its own installer, verifier, contracts, and safety design. Read [CREDITS.md](CREDITS.md) for the full attribution.
 
 ## Contributing
 

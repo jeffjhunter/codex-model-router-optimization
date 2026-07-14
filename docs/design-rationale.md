@@ -4,23 +4,22 @@
 
 Multi-agent workflows consume more tokens and add latency. CMRO disables implicit skill invocation so ordinary repository tasks keep normal Codex behavior. The user opts in with `$route-codex-work`.
 
-## No root-model override
+## Sol root by default
 
-A top-level project model changes every root prompt, not just routed runs. CMRO leaves the root model unpinned and pins only specialized child roles. This makes installation less surprising and lets teams choose the coordinator per task.
+A top-level project model changes every root prompt, not just routed runs. CMRO 2 pins Sol because Sol coordination is part of the product contract and an unpinned root cannot mechanically verify the expected configuration. The installer surfaces conflicts instead of silently replacing an existing project model.
 
-## Three worker tiers
+## Luna or Terra
 
-A binary fast/deep split leaves an awkward middle. CMRO separates:
+A five-signal score routes production to:
 
-- fast mechanical work;
-- balanced everyday implementation; and
-- deep high-impact work.
+- Luna for clear, repeatable, mechanically verifiable work; and
+- Terra for multi-file, tool-heavy, ambiguous, recovery, or high-impact work.
 
-The third route is a risk control, not an invitation to delegate missing authorization.
+High-impact work stays with Terra but adds threat, rollback, data-integrity, and authority checks. Model choice never substitutes for missing authorization.
 
-## Two review depths
+## One independent Sol reviewer
 
-Ordinary correctness review benefits from high reasoning, while security, privacy, migrations, and irreversible effects warrant a separate deeper review posture. This concentrates the most expensive reasoning where the impact supports it.
+Every run uses a separate read-only Sol reviewer. Ordinary work gets correctness, scope, regression, and evidence checks; high-impact work adds adversarial concerns to the same reviewer contract.
 
 ## Atomic criteria instead of a point score alone
 
@@ -44,4 +43,4 @@ Installation and verification can be enforced by code, hashes, filesystem checks
 
 ## Independent lineage
 
-The high-level workflow was inspired by Matt Farmer’s public article, credited in [CREDITS.md](../CREDITS.md). CMRO was independently authored with generic risk-role names, public documented model defaults, an explicit-only policy, versioned packets, a third worker tier, cross-platform transactional tooling, and an open evaluation framework.
+The Sol → Luna/Terra → Sol workflow was inspired by Matt Farmer’s public article, credited in [CREDITS.md](../CREDITS.md). CMRO is independently authored with an explicit-only policy, model-observation gate, versioned packets, cross-platform transactional tooling, and an open evaluation framework.

@@ -12,7 +12,7 @@ CMRO separates user guidance from the compact instructions installed into Codex.
 ## Understand the design
 
 - [Architecture](architecture.md): components, lifecycle, state, and handoffs.
-- [Routing policy](routing-policy.md): fast, balanced, deep, and reviewer selection.
+- [Routing policy](routing-policy.md): Sol coordination, Luna/Terra scoring, and Sol review.
 - [Security model](security-model.md): trust assumptions and permission boundaries.
 - [Limitations](limitations.md): what native instructions cannot guarantee.
 - [Design rationale](design-rationale.md): why the defaults differ from a simple two-route loop.

@@ -1,6 +1,6 @@
 interface:
   display_name: "Route Codex Work"
-  short_description: "Route tasks through bounded agent review"
+  short_description: "Route Sol through Luna or Terra and Sol review"
   default_prompt: "Use $route-codex-work to plan, route, verify, and review this task with evidence."
 
 policy:

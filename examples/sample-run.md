@@ -10,7 +10,7 @@ $route-codex-work Add a --json flag to the local status command. Preserve text o
 
 ## 1. Root contract
 
-The coordinator records `RQ-001` for JSON output, `RQ-002` for backward-compatible text output, `RQ-003` for tests, and `RQ-004` for local-only scope. It creates atomic criteria, captures the Git baseline, selects `balanced_worker`, and records the spawned worker ID.
+The Sol coordinator records `RQ-001` for JSON output, `RQ-002` for backward-compatible text output, `RQ-003` for tests, and `RQ-004` for local-only scope. It creates atomic criteria, captures the Git baseline, scores the task for `terra_worker`, and records the custom-agent type, worker ID, configured model, and independent runtime model observation.
 
 See [plan-packet.yaml](plan-packet.yaml).
 

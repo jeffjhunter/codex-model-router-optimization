@@ -22,7 +22,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - Python enforces this fi
     raise SystemExit("routerctl requires Python 3.11 or newer.") from exc
 
 
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 ROOT = Path(__file__).resolve().parent
 PAYLOAD = ROOT / "router"
 SOURCE_MANIFEST = PAYLOAD / "MANIFEST.json"
@@ -222,6 +222,12 @@ def config_compatible(path: Path) -> tuple[bool, str]:
         data = parse_toml(path)
     except VerificationError as exc:
         return False, str(exc)
+    expected_root = {"model": "gpt-5.6-sol", "model_reasoning_effort": "xhigh"}
+    root_mismatches = [
+        f"{key}={data.get(key)!r}" for key, value in expected_root.items() if data.get(key) != value
+    ]
+    if root_mismatches:
+        return False, "required Sol coordinator settings differ: " + ", ".join(root_mismatches)
     agents = data.get("agents")
     if not isinstance(agents, dict):
         return False, "missing top-level [agents] table"
@@ -234,7 +240,7 @@ def config_compatible(path: Path) -> tuple[bool, str]:
             mismatches.append(f"{key}={observed!r}")
     if mismatches:
         return False, "required agent settings differ: " + ", ".join(mismatches)
-    return True, "required [agents] settings are active"
+    return True, "required Sol coordinator and [agents] settings are active"
 
 
 def find_addendum(document: str) -> tuple[int, int] | None:

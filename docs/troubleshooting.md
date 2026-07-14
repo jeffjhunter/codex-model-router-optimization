@@ -22,7 +22,7 @@ Pass the repository’s top-level directory, not a subdirectory. Run `git rev-pa
 
 ## Config example was staged
 
-Your existing `.codex/config.toml` did not contain the required `[agents]` values or could not be parsed. Merge `.codex/config.codex-model-router.example.toml` manually. Keep a single `[agents]` table, preserve unrelated settings, then rerun verification.
+Your existing `.codex/config.toml` did not contain the required Sol root settings and `[agents]` values, or could not be parsed. Merge `.codex/config.codex-model-router.example.toml` manually, including top-level `model = "gpt-5.6-sol"` and `model_reasoning_effort = "xhigh"`. Keep a single `[agents]` table, preserve unrelated settings, then rerun verification.
 
 ## Skill is not visible
 

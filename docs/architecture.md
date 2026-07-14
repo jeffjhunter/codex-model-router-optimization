@@ -67,9 +67,9 @@ Read-heavy discovery can be parallel when it is independent, but the routed impl
 
 Handoffs use four schemas documented in the installed protocol reference:
 
-- `cmro.plan.v1`
-- `cmro.worker.v1`
-- `cmro.review.v1`
-- `cmro.final.v1`
+- `cmro.plan.v2`
+- `cmro.worker.v2`
+- `cmro.review.v2`
+- `cmro.final.v2`
 
 The schemas make stale context and unsupported completion claims visible. They are conventions checked by the agents, not code-enforced schemas in native Codex.

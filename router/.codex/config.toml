@@ -1,5 +1,7 @@
-# This profile intentionally leaves the root model unpinned.
-# Select the coordinator model in Codex or add a project-level model explicitly.
+# CMRO is an explicit Sol -> Luna/Terra -> Sol routing profile.
+# These root settings apply to every Codex task in the target repository.
+model = "gpt-5.6-sol"
+model_reasoning_effort = "xhigh"
 
 [agents]
 max_threads = 4
