@@ -13,7 +13,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Versioned plan, worker, review, and final packet contracts.
 - Root-owned state, one-writer safety, same-worker revision, and a three-attempt bound.
 - Cross-platform, dependency-free Python installer, verifier, doctor, manifest, and safe uninstall commands.
-- Exact payload allowlist, SHA-256 validation, Git-root checks, link/reparse-point rejection, staged config merges, transactional writes, and ownership records.
+- Exact payload allowlist, SHA-256 validation, Git-root checks, canonical target roots, link/reparse-point destination rejection, staged config merges, transactional writes, and ownership records.
 - Windows, macOS, and Linux CI; deterministic release ZIPs; checksums; and build provenance attestations.
 - Architecture, configuration, security, troubleshooting, evaluation, contribution, support, and release documentation.
 

@@ -119,6 +119,21 @@ def ensure_no_link_components(path: Path) -> None:
                 raise ConflictError(f"Path crosses a symlink or reparse point: {current}")
 
 
+def canonical_target(value: str, error_type: type[RouterError]) -> Path:
+    """Resolve ancestor aliases once while rejecting a link at the target itself."""
+    candidate = Path(value).expanduser().absolute()
+    if not candidate.exists() or not candidate.is_dir() or is_linklike(candidate):
+        raise error_type(f"Target must be an existing regular directory: {candidate}")
+    try:
+        target = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise error_type(f"Cannot resolve target directory {candidate}: {exc}") from exc
+    if not target.is_dir() or is_linklike(target):
+        raise error_type(f"Resolved target must be a regular directory: {target}")
+    ensure_no_link_components(target)
+    return target
+
+
 def require_regular_file(path: Path, label: str) -> None:
     if not path.exists() or not path.is_file() or is_linklike(path):
         raise ConflictError(f"{label} must be a regular file: {path}")
@@ -584,10 +599,7 @@ def build_install_plan(target: Path, source: dict[str, str]) -> tuple[list[Write
 
 def command_install(args: argparse.Namespace) -> int:
     source = load_source_manifest()
-    target = Path(args.target).expanduser().absolute()
-    if not target.exists() or not target.is_dir() or is_linklike(target):
-        raise ConflictError(f"Target must be an existing regular directory: {target}")
-    ensure_no_link_components(target)
+    target = canonical_target(args.target, ConflictError)
     ensure_git_root(target, args.allow_non_git)
     writes, _, incomplete, notes = build_install_plan(target, source)
     print("Install plan:")
@@ -672,10 +684,7 @@ def check_target(target: Path, source: dict[str, str]) -> list[dict[str, Any]]:
 
 def command_verify(args: argparse.Namespace) -> int:
     source = load_source_manifest()
-    target = Path(args.target).expanduser().absolute()
-    if not target.exists() or not target.is_dir() or is_linklike(target):
-        raise VerificationError(f"Target must be an existing regular directory: {target}")
-    ensure_no_link_components(target)
+    target = canonical_target(args.target, VerificationError)
     ensure_git_root(target, args.allow_non_git)
     checks = check_target(target, source)
     passed = all(check["passed"] for check in checks)
@@ -701,10 +710,7 @@ def remove_empty_parents(path: Path, stop: Path) -> None:
 
 def command_uninstall(args: argparse.Namespace) -> int:
     source = load_source_manifest()
-    target = Path(args.target).expanduser().absolute()
-    if not target.exists() or not target.is_dir() or is_linklike(target):
-        raise ConflictError(f"Target must be an existing regular directory: {target}")
-    ensure_no_link_components(target)
+    target = canonical_target(args.target, ConflictError)
     ensure_git_root(target, args.allow_non_git)
     record = load_install_record(target, source)
     if not record:
@@ -863,11 +869,8 @@ def command_doctor(args: argparse.Namespace) -> int:
         findings.append((name, ok, detail))
 
     if args.target:
-        target = Path(args.target).expanduser().absolute()
         try:
-            if not target.is_dir() or is_linklike(target):
-                raise VerificationError("target is not a regular directory")
-            ensure_no_link_components(target)
+            target = canonical_target(args.target, VerificationError)
             ensure_git_root(target, args.allow_non_git)
             findings.append(("target", True, str(target)))
         except RouterError as exc:

@@ -34,7 +34,7 @@ If a model or effort level is unavailable, customize the payload as described in
 ## Not supported or guaranteed
 
 - Python 3.10 or older.
-- Installing through symlinked or junctioned target paths.
+- Using a symlink or junction as the target directory itself. Ancestor aliases are resolved once to a canonical root before containment checks.
 - Silent upgrade over modified managed files.
 - Automatic discovery of account model entitlements.
 - Deterministic native state transitions.

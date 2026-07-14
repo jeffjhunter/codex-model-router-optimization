@@ -30,7 +30,7 @@ The management CLI:
 - uses an exact payload allowlist and SHA-256 manifest;
 - rejects missing, extra, changed, symlinked, or reparse-point payload entries;
 - requires the target Git root unless `--allow-non-git` is explicit;
-- rejects destination paths that cross links or escape the root;
+- resolves ancestor aliases once to a canonical target root, rejects a link at the target itself, and rejects managed destination components that cross links or escape that root;
 - preflights managed-file conflicts before writing;
 - stages an incompatible config instead of rewriting it;
 - marks its `AGENTS.md` block for exact verification and removal;

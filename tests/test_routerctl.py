@@ -399,7 +399,7 @@ class RouterCtlTests(unittest.TestCase):
         self.assertEqual(list(outside.iterdir()), [])
 
     @unittest.skipUnless(hasattr(os, "symlink"), "symlinks unavailable")
-    def test_target_with_linklike_parent_is_rejected_when_supported(self) -> None:
+    def test_target_with_linklike_parent_is_canonicalized_when_supported(self) -> None:
         real_parent = self.root / "real-parent"
         nested_repo = real_parent / "nested-repo"
         nested_repo.mkdir(parents=True)
@@ -410,8 +410,21 @@ class RouterCtlTests(unittest.TestCase):
         except (OSError, NotImplementedError):
             self.skipTest("Current account cannot create symlinks")
         result = self.run_cli("install", "--target", str(alias_parent / "nested-repo"))
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertTrue((nested_repo / ".agents/skills/route-codex-work/SKILL.md").is_file())
+        verified = self.run_cli("verify", "--target", str(alias_parent / "nested-repo"))
+        self.assertEqual(verified.returncode, 0, verified.stderr + verified.stdout)
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symlinks unavailable")
+    def test_target_that_is_itself_a_link_is_rejected_when_supported(self) -> None:
+        linked_repo = self.root / "linked-repo"
+        try:
+            os.symlink(self.repo, linked_repo, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("Current account cannot create symlinks")
+        result = self.run_cli("install", "--target", str(linked_repo))
         self.assertEqual(result.returncode, 3, result.stderr + result.stdout)
-        self.assertFalse((nested_repo / ".agents").exists())
+        self.assertFalse((self.repo / ".agents").exists())
 
     @unittest.skipUnless(hasattr(os, "symlink"), "symlinks unavailable")
     def test_post_install_link_swap_cannot_escape_verify_or_uninstall(self) -> None:
