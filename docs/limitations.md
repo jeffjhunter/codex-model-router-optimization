@@ -14,9 +14,9 @@ The profile does not claim a hard timeout for ordinary subagent turns. The Codex
 
 A custom reviewer requests a read-only sandbox and is behaviorally prohibited from writing. Parent live permission overrides can still change the effective sandbox. Tool-specific external permissions may also differ.
 
-## Model access is not verified
+## Configuration is not runtime model proof
 
-`routerctl` validates local configuration and file integrity. It cannot know which model IDs or reasoning levels are enabled for a particular account, workspace, region, client, or rollout.
+`routerctl` validates exact Sol/Luna/Terra configuration and file integrity. It cannot know which models are entitled or actually selected for a session. A prompt label, thread name, or agent self-report is insufficient. Verified model-routing claims require independent client/session evidence; if the client does not expose it, the run remains `not_verified`.
 
 ## Tests validate distribution behavior
 
@@ -32,4 +32,4 @@ Installed managed agent and skill files must match the source distribution. This
 
 ## User-approved side effects are still risky
 
-Routing to a deeper worker improves analysis; it does not make deployments, migrations, billing changes, credential operations, or destructive actions harmless. Use explicit approvals, reversible stages, backups, and platform-native safeguards.
+Routing to Terra and adding adversarial Sol review improves analysis; it does not make deployments, migrations, billing changes, credential operations, or destructive actions harmless. Use explicit approvals, reversible stages, backups, and platform-native safeguards.

@@ -1,17 +1,15 @@
 {
   "files": {
-    ".agents/skills/route-codex-work/SKILL.md": "22ba3796f6f1ff8387c69b3275221e138ec5fb99d23b5bb6c341176c7854d4fc",
-    ".agents/skills/route-codex-work/agents/openai.yaml": "09cc73c54a1500f7988beba7633f6289d885e58b6d0c0a058d8fa1049265a06a",
-    ".agents/skills/route-codex-work/references/protocol.md": "9c160b163ecec4f9592e5bf21118e3647834c3656b0e0d4aa494ccee7600a82b",
-    ".agents/skills/route-codex-work/references/routing.md": "641f73347bdbd22fb3ffa513258cd4a5d284f00250b21338fdeb9625e3120605",
-    ".codex/agents/balanced_worker.toml": "11303ccbc088516c9bdb800bbd52ed1bede7a663321522a370f6822ba78e412d",
-    ".codex/agents/deep_reviewer.toml": "164e94c9c9658d3562a297fb192caef323b9de8f6645c45e063d18d57772101e",
-    ".codex/agents/deep_worker.toml": "f363cf0b88e9fd087a1030ed4177ce1005063e9ec5c76c788534aab10a090f90",
-    ".codex/agents/fast_worker.toml": "e25fe02b3c5085966b80ad13558612e7c4326db98a98c3ca6f066140022dace7",
-    ".codex/agents/standard_reviewer.toml": "35dbdcf416f623866615982a565c2bbb82c18813a2577d5eba6f1749d782e531",
-    ".codex/config.toml": "035ec24ddb2def9ed46f3e484ba9b1c0dc9540150f89bb350090a51a17e6b027",
-    "AGENTS.addendum.md": "2263fe3c94a19002e2696ad1fb6bc392d142ef5dea2a5dead986cf4d53feec5d"
+    ".agents/skills/route-codex-work/SKILL.md": "06e44d6e2e0f139a1a8053239cb9f6239f1d0989dcd296af7480b9f6b78d7508",
+    ".agents/skills/route-codex-work/agents/openai.yaml": "20a6b95085381fca5b3ce035c3dba33a7cafc4d98c3e7484954119832666b1d2",
+    ".agents/skills/route-codex-work/references/protocol.md": "64a3d688dbab1814e19701dc89d036b88a3468677da9ded4990be64a8bfd2605",
+    ".agents/skills/route-codex-work/references/routing.md": "c7cf4f89013bec2c8cfbea8a4fbfbd2a3237400eb1971a64ecaffe3ca48a5667",
+    ".codex/agents/luna_worker.toml": "b6450de4471e6c4f3d1fabfa63e11be9b0731ad114cf1485d0d27083d6ee0096",
+    ".codex/agents/sol_reviewer.toml": "614cf8bc85bfc953871390d993205eb770b7504ff22418d6529ae77097f3d041",
+    ".codex/agents/terra_worker.toml": "235acd36127c292ea766b778179341d2c433a1069b26ad7568b4734848f1e743",
+    ".codex/config.toml": "6e61859a5fb5a9cda7d1a0b608be91a445e325100ecc8bb6fa1afd43e8a55f09",
+    "AGENTS.addendum.md": "06b1c709e5eb8fa98c950149e6484ad56570632e03d8091d0eafcea96da48b4a"
   },
   "format": 1,
-  "version": "1.0.0"
+  "version": "2.0.0"
 }

@@ -59,7 +59,9 @@ class RouterCtlTests(unittest.TestCase):
         self.assertEqual(installed.returncode, 0, installed.stderr + installed.stdout)
         verified = self.verify()
         self.assertEqual(verified.returncode, 0, verified.stderr + verified.stdout)
-        self.assertNotIn("model =", (self.repo / ".codex/config.toml").read_text(encoding="utf-8"))
+        config = (self.repo / ".codex/config.toml").read_text(encoding="utf-8")
+        self.assertIn('model = "gpt-5.6-sol"', config)
+        self.assertIn('model_reasoning_effort = "xhigh"', config)
 
         removed = self.run_cli("uninstall", "--target", str(self.repo))
         self.assertEqual(removed.returncode, 0, removed.stderr + removed.stdout)
@@ -83,7 +85,7 @@ class RouterCtlTests(unittest.TestCase):
         self.assertIn("no files changed", result.stdout.lower())
 
     def test_managed_conflict_aborts_before_writes(self) -> None:
-        conflict = self.repo / ".codex/agents/fast_worker.toml"
+        conflict = self.repo / ".codex/agents/luna_worker.toml"
         conflict.parent.mkdir(parents=True)
         conflict.write_text("user content\n", encoding="utf-8")
         result = self.install()
@@ -105,7 +107,8 @@ class RouterCtlTests(unittest.TestCase):
         self.assertEqual(self.verify().returncode, 2)
 
         config.write_text(
-            original + '\n[agents]\nmax_threads = 4\nmax_depth = 1\ninterrupt_message = true\n',
+            'model = "gpt-5.6-sol"\nmodel_reasoning_effort = "xhigh"\n'
+            '\n[agents]\nmax_threads = 4\nmax_depth = 1\ninterrupt_message = true\n',
             encoding="utf-8",
         )
         self.assertEqual(self.verify().returncode, 0)
@@ -118,7 +121,7 @@ class RouterCtlTests(unittest.TestCase):
         config = self.repo / ".codex/config.toml"
         config.parent.mkdir()
         original = (
-            'model = "custom-model"\n\n[agents]\nmax_threads = 4\n'
+            'model = "gpt-5.6-sol"\nmodel_reasoning_effort = "xhigh"\n\n[agents]\nmax_threads = 4\n'
             'max_depth = 1\ninterrupt_message = true\ncustom_key = "kept"\n'
         )
         config.write_text(original, encoding="utf-8")
@@ -284,7 +287,7 @@ class RouterCtlTests(unittest.TestCase):
 
     def test_tamper_fails_verification_and_survives_uninstall(self) -> None:
         self.assertEqual(self.install().returncode, 0)
-        worker = self.repo / ".codex/agents/balanced_worker.toml"
+        worker = self.repo / ".codex/agents/terra_worker.toml"
         worker.write_text(worker.read_text(encoding="utf-8") + "# local edit\n", encoding="utf-8")
         self.assertEqual(self.verify().returncode, 2)
         removed = self.run_cli("uninstall", "--target", str(self.repo))
@@ -294,7 +297,7 @@ class RouterCtlTests(unittest.TestCase):
         record = self.repo / ".codex-model-router/installation.json"
         self.assertTrue(record.is_file(), "Partial uninstall must retain its ownership record")
 
-        worker.write_bytes((ROOT / "router/.codex/agents/balanced_worker.toml").read_bytes())
+        worker.write_bytes((ROOT / "router/.codex/agents/terra_worker.toml").read_bytes())
         completed = self.run_cli("uninstall", "--target", str(self.repo))
         self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
         self.assertFalse(worker.exists())
@@ -377,13 +380,15 @@ class RouterCtlTests(unittest.TestCase):
         result = self.run_cli("manifest")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         value = json.loads(result.stdout)
-        self.assertEqual(value["version"], "1.0.0")
-        self.assertIn(".codex/agents/fast_worker.toml", value["files"])
+        self.assertEqual(value["version"], "2.0.0")
+        self.assertIn(".codex/agents/luna_worker.toml", value["files"])
+        self.assertIn(".codex/agents/terra_worker.toml", value["files"])
+        self.assertIn(".codex/agents/sol_reviewer.toml", value["files"])
 
     def test_version(self) -> None:
         result = self.run_cli("--version")
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.strip(), "routerctl 1.0.0")
+        self.assertEqual(result.stdout.strip(), "routerctl 2.0.0")
 
     @unittest.skipUnless(hasattr(os, "symlink"), "symlinks unavailable")
     def test_linklike_destination_is_rejected_when_supported(self) -> None:
@@ -444,7 +449,7 @@ class RouterCtlTests(unittest.TestCase):
         removed = self.run_cli("uninstall", "--target", str(self.repo))
         self.assertEqual(removed.returncode, 3, removed.stderr + removed.stdout)
         self.assertEqual(skill.read_bytes(), before)
-        self.assertTrue((self.repo / ".codex/agents/balanced_worker.toml").is_file())
+        self.assertTrue((self.repo / ".codex/agents/terra_worker.toml").is_file())
         self.assertTrue((self.repo / ".codex-model-router/installation.json").is_file())
 
 

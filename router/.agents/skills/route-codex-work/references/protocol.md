@@ -1,11 +1,11 @@
-# CMRO protocol v1
+# CMRO protocol v2
 
 These packet shapes make handoffs inspectable. YAML examples are illustrative; native Codex does not enforce them as a state machine.
 
 ## Coordinator plan
 
 ```yaml
-schema: "cmro.plan.v1"
+schema: "cmro.plan.v2"
 run_id: "cmro-20260713-a1b2"
 plan_version: 1
 request: "Concise description of the requested outcome"
@@ -25,22 +25,29 @@ scope:
   prohibited_actions: ["unapproved external writes"]
   authority: "local workspace only"
 routing:
-  worker: "balanced_worker"
-  reviewer: "standard_reviewer"
-  rationale: "Multi-file implementation with regression risk"
+  coordinator: { route: "root", configured_model: "gpt-5.6-sol" }
+  worker: { route: "terra_worker", configured_model: "gpt-5.6-terra" }
+  reviewer: { route: "sol_reviewer", configured_model: "gpt-5.6-sol" }
+  score: 3
+  rationale: "Multi-file implementation, tool use, and regression risk"
+model_observation:
+  root: { status: "verified", value: "gpt-5.6-sol", source: "client session details" }
+  worker: { status: "not_verified", value: null, source: null }
+  reviewer: { status: "not_verified", value: null, source: null }
 attempt_limit: 3
 ```
 
 ## Worker report
 
 ```yaml
-schema: "cmro.worker.v1"
+schema: "cmro.worker.v2"
 run_id: "cmro-20260713-a1b2"
 plan_version: 1
 attempt: 1
 worker:
   id: "retained-agent-id"
-  route: "balanced_worker"
+  route: "terra_worker"
+  configured_model: "gpt-5.6-terra"
 status: "done" # done | blocked
 summary: "What changed or why work stopped"
 changed_paths:
@@ -64,12 +71,13 @@ Use `not_run` only for a check that was not executed and explain why. Use `not_v
 ## Reviewer decision
 
 ```yaml
-schema: "cmro.review.v1"
+schema: "cmro.review.v2"
 run_id: "cmro-20260713-a1b2"
 plan_version: 1
 reviewer:
   id: "retained-reviewer-id"
-  route: "standard_reviewer"
+  route: "sol_reviewer"
+  configured_model: "gpt-5.6-sol"
 decision: "accept" # accept | revise | needs_human_review
 criteria:
   - ac_id: "AC-001"
@@ -93,13 +101,17 @@ An `accept` decision requires every current acceptance criterion to pass and no 
 ## Root final record
 
 ```yaml
-schema: "cmro.final.v1"
+schema: "cmro.final.v2"
 run_id: "cmro-20260713-a1b2"
 plan_version: 1
 status: "complete" # complete | needs_human_review
 attempts: 1
 worker_id: "retained-agent-id"
 reviewer_id: "retained-reviewer-id"
+model_observation:
+  root: { status: "verified", value: "gpt-5.6-sol", source: "client session details" }
+  worker: { status: "verified", value: "gpt-5.6-terra", source: "child session details" }
+  reviewer: { status: "verified", value: "gpt-5.6-sol", source: "child session details" }
 requirements:
   - rq_id: "RQ-001"
     ac_ids: ["AC-001"]
@@ -114,5 +126,8 @@ blockers: []
 - Increment `plan_version` for material user steering or scope changes.
 - Reject packets for a different run or stale plan version.
 - Keep worker and reviewer IDs stable across actionable revision cycles.
+- Keep configured model identity separate from independently observed runtime identity.
+- Never use a task label, prompt claim, or custom-agent filename as runtime model proof.
+- A final record with any `not_verified` model observation must use `needs_human_review`, not `complete`.
 - Count no more than three worker attempts.
 - Preserve blocked evidence instead of rewriting it as success.

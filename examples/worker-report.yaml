@@ -1,10 +1,11 @@
-schema: "cmro.worker.v1"
+schema: "cmro.worker.v2"
 run_id: "cmro-example-7f3c"
 plan_version: 1
 attempt: 1
 worker:
-  id: "agent-example-balanced-01"
-  route: "balanced_worker"
+  id: "agent-example-terra-01"
+  route: "terra_worker"
+  configured_model: "gpt-5.6-terra"
 status: "done"
 summary: "Implemented JSON output, tests, and CLI documentation."
 changed_paths:

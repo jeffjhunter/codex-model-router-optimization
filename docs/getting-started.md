@@ -34,8 +34,8 @@ python routerctl.py install --target /path/to/repository
 
 Clean repositories receive:
 
-- `.codex/config.toml` with bounded agent settings and no root-model override;
-- five project-scoped custom agent files;
+- `.codex/config.toml` with a Sol root pin and bounded agent settings;
+- three project-scoped custom agent files for Luna, Terra, and an independent Sol reviewer;
 - the explicit-only `$route-codex-work` skill;
 - a marked router block in the active root `AGENTS.md` or `AGENTS.override.md`; and
 - `.codex-model-router/installation.json` for integrity and safe uninstall ownership.
@@ -48,16 +48,19 @@ If the repository already has a root `AGENTS.override.md`, Codex gives it preced
 
 The installer does not rewrite an existing incompatible TOML file. It stages `.codex/config.codex-model-router.example.toml` and exits `2`.
 
-Merge this table into the existing config, preserving any unrelated settings and ensuring there is only one `[agents]` table:
+Merge the root settings and agent table into the existing config, preserving unrelated settings and ensuring there is only one `[agents]` table:
 
 ```toml
+model = "gpt-5.6-sol"
+model_reasoning_effort = "xhigh"
+
 [agents]
 max_threads = 4
 max_depth = 1
 interrupt_message = true
 ```
 
-Then rerun verification. Do not copy a second `[agents]` header into a file that already has one.
+Then rerun verification. Do not copy a second `[agents]` header into a file that already has one. Existing root `model` values are incompatible with the default v2 contract and must be reconciled deliberately.
 
 ## 4. Verify
 
@@ -75,13 +78,13 @@ Verification compares managed files with the local allowlisted payload hashes, p
 
 ## 5. Start a fresh Codex task
 
-Skills and project instructions are discovered when Codex opens a new task or session. Start from the target repository, select a capable coordinator model, and use a reversible pilot:
+Skills, project instructions, and custom agents are discovered when Codex opens a new task or session. Start from the target repository, confirm the fresh session shows `gpt-5.6-sol`, and use a reversible pilot:
 
 ```text
 $route-codex-work Add a --json flag to the local status command. Preserve its existing text output, add focused tests, and keep changes inside this repository.
 ```
 
-Inspect the agent activity. A healthy run should create one writer, then a separate reviewer, return failed criteria to the same writer ID if needed, and finish with the root gate. Stop the pilot if the observed sequence materially differs.
+Inspect the agent activity and session details. A healthy run should expose the selected Luna/Terra custom agent and model, create a separate Sol reviewer, return failed criteria to the same writer ID if needed, and finish with the Sol root gate. Stop the pilot if the model identities are unavailable or the observed sequence materially differs.
 
 ## Upgrade
 
@@ -92,7 +95,7 @@ Inspect the agent activity. A healthy run should create one writer, then a separ
 5. Run the new release's `install --dry-run` against the target.
 6. Resolve any remaining conflicts intentionally, then install and verify with the new release.
 
-Version 1 intentionally rejects installation records from other payload versions. The old release must therefore remove its own ownership record before the new release is installed; this prevents an upgrade from silently replacing customized prompts.
+Each major payload version rejects installation records from other versions. The old release must therefore remove its own ownership record before the new release is installed; this prevents an upgrade from silently replacing customized prompts. Version 2 also changes the active root model to Sol, so review that project-wide effect before upgrading.
 
 ## Uninstall
 

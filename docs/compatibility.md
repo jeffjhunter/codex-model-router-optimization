@@ -27,7 +27,7 @@ Custom-agent authoring is documented as evolving. Review release notes before de
 
 ## Models
 
-The default profile uses `gpt-5.6-terra` for fast work and `gpt-5.6` for balanced, deep, and review roles. Reasoning efforts range from low to xhigh. Availability may vary by plan, workspace policy, region, rollout, and client version.
+The default profile pins root and reviewer roles to `gpt-5.6-sol`, normal work to `gpt-5.6-terra`, and mechanical work to `gpt-5.6-luna`. Availability may vary by plan, workspace policy, region, rollout, and client version. Installer verification proves configuration, not entitlement or runtime selection.
 
 If a model or effort level is unavailable, customize the payload as described in [configuration](configuration.md), regenerate the manifest, and test a reversible pilot. Do not simply edit an installed target and then ignore verification failure.
 

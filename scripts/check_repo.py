@@ -22,11 +22,22 @@ def fail(message: str) -> None:
 
 def check_toml() -> None:
     paths = sorted((ROOT / "router/.codex").rglob("*.toml"))
-    if len(paths) != 6:
-        fail(f"expected 6 TOML files, found {len(paths)}")
+    if len(paths) != 4:
+        fail(f"expected 4 TOML files, found {len(paths)}")
+    parsed = {}
     for path in paths:
         with path.open("rb") as handle:
-            tomllib.load(handle)
+            parsed[path.name] = tomllib.load(handle)
+    expected = {
+        "config.toml": ("gpt-5.6-sol", "xhigh"),
+        "luna_worker.toml": ("gpt-5.6-luna", "medium"),
+        "terra_worker.toml": ("gpt-5.6-terra", "high"),
+        "sol_reviewer.toml": ("gpt-5.6-sol", "xhigh"),
+    }
+    for name, (model, effort) in expected.items():
+        value = parsed.get(name)
+        if value is None or value.get("model") != model or value.get("model_reasoning_effort") != effort:
+            fail(f"{name} does not pin {model} / {effort}")
     print(f"PASS: parsed {len(paths)} TOML files")
 
 
@@ -45,7 +56,7 @@ def check_skill() -> None:
     yaml = OPENAI_YAML.read_text(encoding="utf-8")
     required = (
         'display_name: "Route Codex Work"',
-        'short_description: "Route tasks through bounded agent review"',
+        'short_description: "Route Sol through Luna or Terra and Sol review"',
         'default_prompt: "Use $route-codex-work',
         "allow_implicit_invocation: false",
     )
@@ -89,6 +100,23 @@ def check_manifest() -> None:
     print("PASS: payload allowlist and hashes")
 
 
+def check_eval_inventory() -> None:
+    path = ROOT / "evals/scenarios.jsonl"
+    scenarios = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+    required_ids = {"review-seeded-defect", "attempt-limit", "route-terra-migration-blocker"}
+    observed_ids = {item.get("id") for item in scenarios}
+    if not required_ids.issubset(observed_ids):
+        fail(f"eval inventory is missing required scenarios: {sorted(required_ids - observed_ids)}")
+    expected_models = {"luna_worker": "gpt-5.6-luna", "terra_worker": "gpt-5.6-terra"}
+    for item in scenarios:
+        worker = item.get("expected_worker")
+        if expected_models.get(worker) != item.get("expected_model"):
+            fail(f"eval {item.get('id')} has inconsistent worker/model routing")
+        if item.get("expected_reviewer") != "sol_reviewer":
+            fail(f"eval {item.get('id')} does not use sol_reviewer")
+    print(f"PASS: {len(scenarios)} evaluation scenarios use the v2 model contract")
+
+
 def check_sensitive_literals() -> None:
     suspicious = re.compile(r"(?i)(gh[pousr]_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY)")
     hits: list[str] = []
@@ -110,6 +138,7 @@ def main() -> None:
     check_toml()
     check_skill()
     check_manifest()
+    check_eval_inventory()
     check_local_links()
     check_sensitive_literals()
     print("Repository checks passed.")

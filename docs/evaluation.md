@@ -6,8 +6,9 @@
 
 | Metric | Question |
 | --- | --- |
-| Route accuracy | Did the coordinator select the expected risk tier? |
-| Reviewer selection accuracy | Did high-impact work receive deep review? |
+| Route accuracy | Did the Sol coordinator select Luna or Terra using the published score? |
+| Model identity | Does independent client/session evidence show Sol → Luna/Terra → Sol? |
+| Reviewer coverage | Did high-impact work receive adversarial Sol review? |
 | Requirement coverage | Did every user requirement map to a tested criterion? |
 | Seeded-defect recall | Did review catch known defects placed in a fixture? |
 | False-complete rate | Did the root report completion while a required criterion failed? |
@@ -21,9 +22,9 @@
 
 Evaluate at least:
 
-- clear mechanical transformations expected to use fast routing;
-- ordinary multi-file features expected to use balanced routing;
-- security or migration cases expected to use deep routing and deep review;
+- clear mechanical transformations expected to use Luna;
+- ordinary multi-file features expected to use Terra;
+- security or migration cases expected to use Terra with adversarial Sol review;
 - a seeded implementation defect that review should catch;
 - a missing-credential or missing-user-choice blocker;
 - material user steering that should increment `plan_version`;
@@ -38,7 +39,7 @@ Every behavioral result should include:
 
 - date and CMRO version;
 - Codex client and version;
-- exact model IDs and reasoning levels;
+- configured model IDs and reasoning levels, plus the independent client/session source used to observe each runtime model;
 - parent permission mode and available tools;
 - repository fixture commit;
 - expected and actual worker/reviewer routes;

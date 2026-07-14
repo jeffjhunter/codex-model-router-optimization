@@ -1,4 +1,4 @@
-schema: "cmro.plan.v1"
+schema: "cmro.plan.v2"
 run_id: "cmro-example-7f3c"
 plan_version: 1
 request: "Add a backward-compatible JSON option to the local status command."
@@ -36,7 +36,13 @@ scope:
   prohibited_actions: ["publishing", "deployment", "external messages"]
   authority: "local repository only"
 routing:
-  worker: "balanced_worker"
-  reviewer: "standard_reviewer"
-  rationale: "Multi-file behavior and regression risk with no deep-impact boundary."
+  coordinator: {route: "root", configured_model: "gpt-5.6-sol"}
+  worker: {route: "terra_worker", configured_model: "gpt-5.6-terra"}
+  reviewer: {route: "sol_reviewer", configured_model: "gpt-5.6-sol"}
+  score: 3
+  rationale: "Multi-file behavior, tool use, and regression risk."
+model_observation:
+  root: {status: "verified", value: "gpt-5.6-sol", source: "client session details"}
+  worker: {status: "not_verified", value: null, source: null}
+  reviewer: {status: "not_verified", value: null, source: null}
 attempt_limit: 3
