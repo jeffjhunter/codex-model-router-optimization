@@ -334,6 +334,20 @@ class RouterCtlTests(unittest.TestCase):
         value = json.loads(result.stdout)
         self.assertTrue(value["passed"])
         self.assertTrue(value["checks"])
+        self.assertEqual(value["scope"], "distribution")
+        self.assertEqual(value["version"], "3.0.0")
+        self.assertTrue(value["limitations"])
+
+    def test_doctor_json_labels_distribution_scope(self) -> None:
+        result = self.run_cli("doctor", "--target", str(self.repo), "--json")
+        self.assertIn(result.returncode, {0, 2}, result.stderr + result.stdout)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["schema"], "cmro.doctor.v1")
+        self.assertEqual(value["scope"], "distribution")
+        self.assertEqual(value["version"], "3.0.0")
+        backend = next(item for item in value["findings"] if item["name"] == "backend_contract")
+        self.assertTrue(backend["passed"])
+        self.assertTrue(value["limitations"])
 
     def test_target_must_be_git_root(self) -> None:
         child = self.repo / "child"
@@ -380,15 +394,39 @@ class RouterCtlTests(unittest.TestCase):
         result = self.run_cli("manifest")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         value = json.loads(result.stdout)
-        self.assertEqual(value["version"], "2.0.0")
+        self.assertEqual(value["scope"], "distribution")
+        self.assertEqual(value["version"], "3.0.0")
         self.assertIn(".codex/agents/luna_worker.toml", value["files"])
         self.assertIn(".codex/agents/terra_worker.toml", value["files"])
         self.assertIn(".codex/agents/sol_reviewer.toml", value["files"])
 
+    def test_validate_run_command_uses_allowlisted_validator(self) -> None:
+        record = {
+            "schema": "cmro.final.v3",
+            "run_id": "cmro-test",
+            "plan_version": 1,
+            "status": "needs_human_review",
+            "attempts": 0,
+            "backend": "codex_app_tasks",
+            "worker_id": None,
+            "reviewer_id": None,
+            "identity": {
+                role: {"control_plane_pinned": False, "runtime_observed": False}
+                for role in ("root", "worker", "reviewer")
+            },
+            "requirements": [{"rq_id": "RQ-001", "ac_ids": ["AC-001"], "status": "not_verified"}],
+            "blockers": ["Identity preflight did not complete"],
+        }
+        path = self.root / "run.json"
+        path.write_text(json.dumps(record), encoding="utf-8")
+        result = self.run_cli("validate-run", "--record", str(path))
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertTrue(json.loads(result.stdout)["valid"])
+
     def test_version(self) -> None:
         result = self.run_cli("--version")
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.strip(), "routerctl 2.0.0")
+        self.assertEqual(result.stdout.strip(), "routerctl 3.0.0")
 
     @unittest.skipUnless(hasattr(os, "symlink"), "symlinks unavailable")
     def test_linklike_destination_is_rejected_when_supported(self) -> None:

@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import os
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
@@ -16,6 +17,32 @@ DIST = ROOT / "dist"
 ARCHIVE = DIST / f"codex-model-router-optimization-{VERSION}.zip"
 PREFIX = f"codex-model-router-optimization-{VERSION}/"
 EXCLUDED_PREFIXES = ("dist/", ".git/")
+REQUIRED_ARCHIVE_MEMBERS = {
+    "router/.agents/skills/route-codex-work/references/actors.md",
+    "router/.agents/skills/route-codex-work/scripts/observe_session.py",
+    "router/.agents/skills/route-codex-work/scripts/snapshot_worktree.py",
+    "router/.agents/skills/route-codex-work/scripts/validate_run.py",
+}
+
+
+def run_release_checks() -> None:
+    status = subprocess.run(
+        ["git", "-C", str(ROOT), "status", "--porcelain", "--untracked-files=all"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+    if status:
+        raise SystemExit("Release builds require a clean Git worktree.")
+    for script, arguments in (
+        ("scripts/build_manifest.py", ["--check"]),
+        ("scripts/check_repo.py", []),
+    ):
+        subprocess.run(
+            [sys.executable, str(ROOT / script), *arguments],
+            cwd=ROOT,
+            check=True,
+        )
 
 
 def tracked_files() -> list[str]:
@@ -36,6 +63,7 @@ def sha256(path: Path) -> str:
 
 
 def main() -> None:
+    run_release_checks()
     files = tracked_files()
     if not files:
         raise SystemExit("No tracked files found. Initialize and commit the repository first.")
@@ -53,6 +81,16 @@ def main() -> None:
             info.external_attr = mode << 16
             info.compress_type = zipfile.ZIP_DEFLATED
             archive.writestr(info, source.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
+    with zipfile.ZipFile(ARCHIVE) as archive:
+        members = {
+            name.removeprefix(PREFIX)
+            for name in archive.namelist()
+            if name.startswith(PREFIX)
+        }
+    missing = sorted(REQUIRED_ARCHIVE_MEMBERS - members)
+    if missing:
+        ARCHIVE.unlink(missing_ok=True)
+        raise SystemExit("Release archive is missing required backend files: " + ", ".join(missing))
     checksums = DIST / "SHA256SUMS"
     checksums.write_text(f"{sha256(ARCHIVE)}  {ARCHIVE.name}\n", encoding="utf-8", newline="\n")
     print(f"Built {ARCHIVE} ({ARCHIVE.stat().st_size} bytes)")

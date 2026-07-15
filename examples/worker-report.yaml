@@ -1,9 +1,10 @@
-schema: "cmro.worker.v2"
+schema: "cmro.worker.v3"
 run_id: "cmro-example-7f3c"
 plan_version: 1
 attempt: 1
 worker:
-  id: "agent-example-terra-01"
+  id: "task-example-terra-01"
+  backend: "codex_app_tasks"
   route: "terra_worker"
   configured_model: "gpt-5.6-terra"
 status: "done"

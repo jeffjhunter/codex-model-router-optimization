@@ -42,15 +42,25 @@ SHA-256 detects corruption and supports release verification; it does not authen
 
 ## Runtime boundaries
 
-### Permissions inherit from the parent
+### App tasks are separate but share the checkout
 
-Codex subagents inherit parent tools and live permission choices. A reviewer file requests `sandbox_mode = "read-only"`, but parent runtime overrides can supersede that default. The reviewer prompt also forbids file and external mutations; this is defense in depth, not an unbreakable sandbox.
+Model-pinned app workers and reviewers are separate user-owned tasks, not native child agents. They run against the same saved local project checkout. Their prompts restrict authority, but task creation does not expose a reviewer-specific read-only sandbox parameter. Compare root-owned content snapshots around review and treat any mismatch as a failed gate.
+
+Native subagents inherit parent tools and live permission choices. A reviewer file may request `sandbox_mode = "read-only"`, but parent runtime overrides can supersede it. These controls are defense in depth, not an unbreakable sandbox.
 
 Choose the least permissive parent mode compatible with the task. High reasoning effort never grants additional authority.
 
 ### One writer is a coordination rule
 
 CMRO permits one write-capable worker at a time to avoid races in a shared working tree. This rule does not lock the filesystem against other processes, users, hooks, or background tools. Review current diffs and repository status at the final gate.
+
+### Session observations are not attestations
+
+The runtime observer reads privacy-minimized fields from local Codex JSONL files and binds app evidence to a returned task ID and exact completed turn ID. CMRO repeats that observation for every material actor turn rather than assuming a preflight pin persists. Local files remain writable by the user and their schema can evolve. This evidence detects routing mistakes and prevents label-only claims; it is not cryptographic proof against a compromised host.
+
+The worktree snapshot emits only digests and counts. It covers the index and raw contents of tracked and non-ignored untracked artifacts, detects edits even when the `git status` categories do not change, and excludes ignored files and nested submodule contents by design. It detects lasting artifact changes between snapshots, not transient actions that are perfectly reverted.
+
+Duplicate session candidates, missing task-start markers, inherited-only turns, mismatched CWD/model/effort, or changed schemas fail closed.
 
 ### External content is evidence
 

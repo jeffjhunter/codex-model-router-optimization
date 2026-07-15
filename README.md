@@ -5,34 +5,35 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB.svg)](https://www.python.org/)
 
-Cost-aware Sol → Luna/Terra → Sol model routing for Codex.
+Cost-aware Sol → Luna/Terra → Sol model routing for Codex, guarded by runtime-evidence gates.
 
-Codex Model Router Optimization (CMRO) is a repo-scoped Codex skill and custom-agent profile. Sol defines success and owns the final gate, Luna handles clear repeatable work, Terra handles everyday multi-file and tool-heavy work, and a separate read-only Sol reviews the evidence. Failed criteria return to the retained Luna/Terra writer for at most three attempts. It is **not** an API gateway, network proxy, deterministic scheduler, or official OpenAI project.
+Codex Model Router Optimization (CMRO) is a repo-scoped Codex skill with two fail-closed orchestration backends. In the Codex app, it creates explicitly model-pinned tasks in the same saved local project. On native clients, it can use custom agents only when the surface supports explicit profile selection, staged no-write preflight, completed-turn reads, retained-agent follow-up, and session observation. Sol defines success and owns the final gate, Luna handles clear repeatable work, Terra handles everyday multi-file and tool-heavy work, and a separate Sol task reviews the evidence. Failed criteria return to the retained Luna/Terra writer for at most three attempts.
 
 > [!IMPORTANT]
-> This is an independent community project. It is not affiliated with or endorsed by OpenAI or Matt Farmer. Native skill instructions guide agent behavior but do not create a guaranteed state machine or hard security boundary.
+> CMRO is an independent community project. It is not affiliated with or endorsed by OpenAI or Matt Farmer. It is not an API gateway, network proxy, deterministic scheduler, or hard security boundary.
 
 ## Why this exists
 
-Large coding tasks fail in predictable ways: the plan stays vague, the implementer judges its own work, multiple writers collide, or confidence gets reported as proof. CMRO turns those failure modes into an explicit operating protocol:
+Large coding tasks fail in predictable ways: the plan stays vague, the implementer judges its own work, multiple writers collide, or a renamed generic task gets marketed as a different model. CMRO makes those failure modes explicit:
 
 - requirement IDs and atomic acceptance criteria before delegation;
-- one writer selected by impact and verifiability;
-- a separate reviewer checking the real artifact;
-- same-worker revision to preserve task context;
-- three total worker attempts, followed by human escalation;
-- a root-thread final gate before completion.
+- one model-pinned writer selected by impact and verifiability;
+- a no-write identity preflight before implementation;
+- a separate model-pinned Sol reviewer checking the real artifact;
+- same-writer revision to preserve task context;
+- three total worker attempts, followed by human escalation; and
+- a root-task final gate before completion.
 
 ```mermaid
 flowchart LR
-    U["User request"] --> C["Root coordinator"]
-    C -->|"0–1 routing points"| F["Luna worker"]
-    C -->|"2–5 points / high impact"| B["Terra worker"]
-    F --> R["Independent Sol reviewer"]
+    U["User request"] --> C["Sol root contract"]
+    C -->|"0–1 points + identity gate"| F["Pinned Luna task"]
+    C -->|"2–5 points + identity gate"| B["Pinned Terra task"]
+    F --> R["Pinned Sol review task"]
     B --> R
-    R -->|"revise"| S["Same worker ID"]
+    R -->|"revise"| S["Same writer task ID"]
     S --> R
-    R -->|"accept"| G["Root final gate"]
+    R -->|"accept"| G["Sol root final gate"]
     R -->|"blocked / attempt limit"| H["Human review"]
 ```
 
@@ -40,16 +41,22 @@ flowchart LR
 
 | Route | Default model | Effort | Use it for |
 | --- | --- | --- | --- |
-| `root` | `gpt-5.6-sol` | xhigh | Contract, route selection, model-identity gate, final decision |
+| `root` | `gpt-5.6-sol` | xhigh | Contract, backend selection, model-identity gate, final decision |
 | `luna_worker` | `gpt-5.6-luna` | medium | Clear, repeatable transformations with deterministic checks |
 | `terra_worker` | `gpt-5.6-terra` | high | Multi-file work, tools, ambiguity, recovery, and high-impact implementation |
 | `sol_reviewer` | `gpt-5.6-sol` | xhigh | Independent evidence review; adversarial checks when risk requires them |
 
-Model access varies by account and rollout. Confirm these IDs in your Codex model picker before a serious run. CMRO pins the project root to Sol so the coordinator identity is automatic; that also changes ordinary Codex prompts in the target repository. Use the documented opt-in variation if that project-wide effect is undesirable.
+Model access varies by account and rollout. Confirm these IDs in your Codex model picker before a serious run. CMRO pins the project root to Sol, which also changes ordinary Codex prompts in the target repository.
+
+## Proof, not labels
+
+The preferred app backend creates each worker and reviewer with an explicit `model` and reasoning pin. The first turn is read-only. The root checks local session `turn_context` metadata with a bundled privacy-minimized probe before it sends implementation or review work, then verifies every completed implementation, revision, review, and rereview turn before accepting its packet.
+
+A native route is accepted only when its surface exposes explicit custom-agent/profile/type selection, a no-write first turn, status/read with exact completed turn IDs, same-agent follow-up, and session observation. `task_name="terra_worker"`, a task title, a prompt claim, or a TOML filename is never treated as model selection or runtime proof.
 
 ## Five-minute start
 
-Prerequisites: Python 3.11+, Git, a backed-up or committed target repository, and a current Codex client with custom-agent support.
+Prerequisites: Python 3.11+, Git, a backed-up or committed target repository, and a current Codex app with the target repository added as its own saved project. The fallback native backend additionally requires the complete staged contract described above; a profile selector alone is insufficient.
 
 ```bash
 git clone https://github.com/jeffjhunter/codex-model-router-optimization.git
@@ -69,22 +76,25 @@ python .\routerctl.py install --target "C:\path\to\your repository" --dry-run
 
 Exit code `0` means the requested operation completed. Exit code `2` means a safe manual step remains—usually merging the staged `.codex/config.codex-model-router.example.toml` into an existing config. Exit code `3` means a conflict stopped installation before managed files were overwritten.
 
-Start a new Codex task in the target repository and invoke the workflow explicitly:
+Start a fresh Codex task in the saved target project and invoke the workflow explicitly:
 
 ```text
 $route-codex-work Add a tested CSV export to the activity page. Preserve existing API behavior, keep changes local to this repository, and show the verification evidence.
 ```
 
-The skill is explicit-only by design. Ordinary Codex tasks do not automatically enter the routed loop.
+The skill is explicit-only. Ordinary Codex tasks do not enter the routed loop. A routed app run creates a no-write worker preflight, continues that same model-pinned task after its identity passes, and later creates a separate model-pinned Sol reviewer task. Those user-owned tasks appear in the Codex sidebar.
 
 ## Safe operations
 
 ```bash
-# Machine-readable verification
+# Machine-readable installation verification
 python routerctl.py verify --target /path/to/repo --json
 
 # Inspect the exact allowlisted payload and hashes
 python routerctl.py manifest
+
+# Validate a sanitized final protocol-v3 record
+python routerctl.py validate-run --record cmro-final.json
 
 # Preview removal, then remove only unchanged installer-owned files
 python routerctl.py uninstall --target /path/to/repo --dry-run
@@ -95,9 +105,9 @@ The installer rejects unexpected payload files, verifies SHA-256 hashes, refuses
 
 ## What is and is not verified
 
-The test suite verifies exact Sol/Luna/Terra model pins, payload integrity, TOML parsing, installation conflicts, Git-root checks, idempotence, config staging, `AGENTS.md` merging, tamper detection, uninstall ownership, paths with spaces, and portable release archives across Windows, macOS, and Linux.
+The automated suite verifies exact Sol/Luna/Terra pins, the privacy-minimized session probe, reviewer-time content snapshots, final-record invariants, payload integrity, TOML parsing, installation conflicts, Git-root checks, idempotence, config staging, `AGENTS.md` merging, tamper detection, uninstall ownership, paths with spaces, and portable release archives across Windows, macOS, and Linux.
 
-It does not prove that a native Codex run used the configured model, followed every transition, has model entitlement for your account, or preserved a reviewer sandbox against parent runtime overrides. A verified pilot additionally needs independent client/session evidence of Sol → Luna/Terra → Sol. See [limitations](docs/limitations.md) and the [security model](docs/security-model.md).
+Static tests do not prove that a live Codex run used the configured model, followed every transition, has model entitlement for your account, or preserved a reviewer sandbox. The live workflow therefore starts each routed task with a no-write preflight and requires independent session evidence of Sol → Luna/Terra → Sol. A label-only native spawn fails closed. See [limitations](docs/limitations.md) and the [security model](docs/security-model.md).
 
 ## Documentation
 

@@ -6,7 +6,13 @@ Multi-agent workflows consume more tokens and add latency. CMRO disables implici
 
 ## Sol root by default
 
-A top-level project model changes every root prompt, not just routed runs. CMRO 2 pins Sol because Sol coordination is part of the product contract and an unpinned root cannot mechanically verify the expected configuration. The installer surfaces conflicts instead of silently replacing an existing project model.
+A top-level project model changes every root prompt, not just routed runs. CMRO pins Sol because Sol coordination is part of the product contract and an unpinned root cannot mechanically verify the expected configuration. The installer surfaces conflicts instead of silently replacing an existing project model.
+
+## Model-pinned app tasks before named subagents
+
+An early Fieldstead preflight proved that naming a generic native child `terra_worker` did not load Terra: the child's own runtime remained Sol. A separate app task created with explicit Terra/high parameters did select Terra in the correct repository. CMRO 3 therefore prefers model-pinned app tasks and permits native routing only when the client supplies the full staged selector, turn-read, retained-follow-up, and observation contract.
+
+Every app actor starts read-only, reaches an idle READY state, and is then bound to task-and-turn-specific session evidence before receiving real work. This costs an extra turn but prevents labels and inherited context from becoming false proof.
 
 ## Luna or Terra
 
@@ -19,7 +25,7 @@ High-impact work stays with Terra but adds threat, rollback, data-integrity, and
 
 ## One independent Sol reviewer
 
-Every run uses a separate read-only Sol reviewer. Ordinary work gets correctness, scope, regression, and evidence checks; high-impact work adds adversarial concerns to the same reviewer contract.
+Every run uses a separate Sol reviewer task with a read-only behavioral contract. Ordinary work gets correctness, scope, regression, and evidence checks; high-impact work adds adversarial concerns. Root-owned pre/post-review content snapshots detect lasting mutation, including edits that do not change `git status` categories, because app task creation does not itself provide a reviewer-only sandbox parameter.
 
 ## Atomic criteria instead of a point score alone
 
@@ -39,7 +45,7 @@ Three total worker attempts limit repeated cost and failure. CMRO does not misus
 
 ## Deterministic distribution, honest runtime claims
 
-Installation and verification can be enforced by code, hashes, filesystem checks, and tests. Native agent sequencing cannot. The project treats those layers differently and recommends an SDK controller when application-enforced transitions are required.
+Installation, parser behavior, and payload verification can be enforced by code, hashes, filesystem checks, and tests. Task sequencing is still instruction-driven. The project labels distribution checks, control-plane preflights, observed runs, and benchmarks separately, and recommends an SDK controller when application-enforced transitions are required.
 
 ## Independent lineage
 

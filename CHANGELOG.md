@@ -4,6 +4,22 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-07-14
+
+### Fixed
+
+- Prevent route-like `task_name` labels from being mistaken for custom-agent or model selection.
+- Add a Codex app control-plane backend that creates model-pinned worker and reviewer tasks in the exact saved local project, authenticates preflight and every later action turn, and reuses retained task IDs for revision.
+- Fail closed before artifact edits when neither model-pinned tasks nor a native surface with the complete staged custom-agent contract is available.
+
+### Added
+
+- Add a privacy-minimized, cross-platform session observation script with exact model, effort, and repository-CWD checks.
+- Add a privacy-minimized content snapshot for reviewer-time mutation detection, including changes that preserve `git status` categories.
+- Add explicit app-task actor contracts, all-action-turn binding, no-write identity preflights, terminal task monitoring, and backend-aware protocol v3 packets.
+- Add a final-record validator that requires at least one implementation attempt, complete turn evidence, and matching snapshots for every accepted review.
+- Document the saved-project requirement, control-plane evidence, and model-pinned task topology.
+
 ## [2.0.0] - 2026-07-14
 
 ### Changed
@@ -28,6 +44,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Windows, macOS, and Linux CI; deterministic release ZIPs; checksums; and build provenance attestations.
 - Architecture, configuration, security, troubleshooting, evaluation, contribution, support, and release documentation.
 
-[Unreleased]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/jeffjhunter/codex-model-router-optimization/releases/tag/v1.0.0
