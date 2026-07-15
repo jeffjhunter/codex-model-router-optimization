@@ -1,19 +1,20 @@
 {
   "files": {
-    ".agents/skills/route-codex-work/SKILL.md": "ca11647e78dfcb7097b188a618e3e2a4c81c6d67abde217bf8cea329c9260612",
+    ".agents/skills/route-codex-work/SKILL.md": "b84bed0b375c57d5c89f2dbd4b5f606bb952de265661e7f24131ee5a7917b89a",
     ".agents/skills/route-codex-work/agents/openai.yaml": "96de4069291939038202925ea3b28fbfd3e2500b490687fb8d7b0bfebed35146",
-    ".agents/skills/route-codex-work/references/actors.md": "9274ecc375235609f5892f986659e513938863dc82d388d116472cd59ca1da9d",
-    ".agents/skills/route-codex-work/references/protocol.md": "3fc103c55219c5982cf491d56f41a19d5c84ec09fba8b9e6652d1642bbaa973a",
+    ".agents/skills/route-codex-work/references/actors.md": "c716ced0eeaa6fadf4390729cd47ca228cd0c39433c01aca13d24f7193bd8dd5",
+    ".agents/skills/route-codex-work/references/protocol.md": "d381712abbb29e715738d49ff4b47595b62419e33b3454f40abdeaf81e448fd8",
     ".agents/skills/route-codex-work/references/routing.md": "5a7b98774dc8cdce1440d9e6b92335f9b247434acc571c29689f4db62a823ffb",
     ".agents/skills/route-codex-work/scripts/observe_session.py": "98f04fdd29c2c5c0da8651e9cf24109dea619d5cc34029f0a3ccb0322def7cae",
     ".agents/skills/route-codex-work/scripts/snapshot_worktree.py": "383a85d6eb15555f244801af36a5e563969cb611c9124d4acf50cecaf6cbed6d",
-    ".agents/skills/route-codex-work/scripts/validate_run.py": "1fcfdbc76869452e43a4b58df8c1ad5439710e4113cf232307ce1f2a1f21fbf6",
-    ".codex/agents/luna_worker.toml": "a02b5cdadce1d07195cb09710307bdddfa488a726bb8c13614855a2c9d9a4df0",
-    ".codex/agents/sol_reviewer.toml": "b475d2cab5a245dc066601709a982131c63d6737568994fa2b3d6e801bc19171",
-    ".codex/agents/terra_worker.toml": "d908d8c3e33bbcd8f15e81eddaffbdf387e2512319817c292ea903ff36df89a0",
+    ".agents/skills/route-codex-work/scripts/validate_packet.py": "410be003917fdef952c9c39f807a35c0832c8f1d184b9879084faa04469fda0f",
+    ".agents/skills/route-codex-work/scripts/validate_run.py": "c205d2e08c309e66e0c72e60f7c436035111206abb6c5dab6f6316765ca8e49f",
+    ".codex/agents/luna_worker.toml": "d3632261c6b4941610f9773c26829cfebfbbd1b2a9b4024e71e0a9b6cad7fff4",
+    ".codex/agents/sol_reviewer.toml": "b44402bd82f715b55334dcb3f752ad6d789d5bb2c1f23f970e2589b52da1eacb",
+    ".codex/agents/terra_worker.toml": "0b7244e72493258b5a9482f08b19e19603567a14928f077e09f96c6940a0ebfc",
     ".codex/config.toml": "6e61859a5fb5a9cda7d1a0b608be91a445e325100ecc8bb6fa1afd43e8a55f09",
-    "AGENTS.addendum.md": "a329701fb8bebc703a42bf319adf29263068dcf4c9048dcfb2dce92cd0d64872"
+    "AGENTS.addendum.md": "eccabda517a4397a9a1c5988635bc785b3f75eaf90868f456da800a3ab6dead3"
   },
   "format": 1,
-  "version": "3.0.0"
+  "version": "3.0.1"
 }

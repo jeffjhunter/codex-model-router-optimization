@@ -30,13 +30,14 @@ OpenAI documents [custom agents and subagent controls](https://developers.openai
 
 ### Model-pinned Codex app tasks
 
-This is the preferred control-plane backend. A standalone Terra/high identity preflight has been locally observed; a complete Sol → Terra → Sol application run remains the release gate before any end-to-end claim.
+This is the preferred control-plane backend. The dated [Fieldstead pilot](case-studies/fieldstead-pilot.md) locally observed a complete Sol -> Terra -> Sol orchestration lifecycle that correctly terminated `needs_human_review`; it is one run, not a benchmark or completion guarantee.
 
 1. Resolve the saved local project whose canonical path exactly matches the root task's repository.
 2. Create one worker task with an explicit Luna or Terra model and effort pin. Its first turn is read-only.
 3. Use `scripts/observe_session.py` from the root to verify the task ID, exact completed turn, selected model, effort, and repository CWD from local session metadata.
-4. Continue the retained task with the implementation packet and later revision packets; observe every exact completed action turn before accepting its report.
-5. After the writer is idle, create a separate Sol/xhigh task, authenticate it the same way, snapshot repository content, continue it with the read-only review packet, observe the exact review turn, and require an identical post-review content snapshot.
+4. Continue the retained task with the implementation packet and later revision packets; observe every exact completed action turn, then validate its raw JSON report against root-owned context before accepting it.
+5. After the writer is idle, create a separate Sol/xhigh task, authenticate it the same way, snapshot repository content, continue it with the read-only review packet, observe the exact review turn, require an identical post-review content snapshot, and validate its decision packet.
+6. If an action response is useful but malformed, allow one same-task, no-write format repair with separate turn accounting and matching repair snapshots. Repairs never consume implementation attempts.
 
 The worker and reviewer are user-owned tasks visible in the Codex sidebar. They share the same local checkout, so CMRO serializes all writes and starts review only after the writer is idle.
 
@@ -56,13 +57,22 @@ stateDiagram-v2
     BackendGate --> WorkerPreflight: model-pinned worker created
     WorkerPreflight --> Human: identity mismatch or unavailable
     WorkerPreflight --> Worker: identity verified
-    Worker --> ReviewPreflight: done + evidence
+    Worker --> WorkerPacket: done + evidence
+    WorkerPacket --> ReviewPreflight: valid against root context
+    WorkerPacket --> WorkerRepair: invalid representation
+    WorkerRepair --> ReviewPreflight: valid + no-write snapshots match
+    WorkerRepair --> Human: second invalid packet or mutation
     Worker --> Human: blocked
     ReviewPreflight --> Human: identity mismatch or unavailable
     ReviewPreflight --> Review: identity verified
-    Review --> Worker: actionable revision / same ID
-    Review --> RootGate: accept
-    Review --> Human: missing authority or proof
+    Review --> ReviewPacket: decision + evidence
+    ReviewPacket --> Worker: valid actionable revision / same ID
+    ReviewPacket --> RootGate: valid accept
+    ReviewPacket --> ReviewRepair: invalid representation
+    ReviewRepair --> Worker: valid revise + no-write snapshots match
+    ReviewRepair --> RootGate: valid accept + no-write snapshots match
+    ReviewRepair --> Human: second invalid packet or mutation
+    ReviewPacket --> Human: missing authority or proof
     Worker --> Human: third attempt fails
     RootGate --> Complete: every current criterion passes
     RootGate --> Worker: correctable gap
@@ -73,7 +83,7 @@ stateDiagram-v2
 
 ## State ownership
 
-The root task owns the stable run ID, plan version, requirement mappings, baseline, allowed paths, backend, retained task IDs, model observations, attempt count, and terminal status. That state stays in root context unless the user explicitly requests an audit artifact.
+The root task owns the stable run ID, plan version, requirement mappings, baseline, allowed paths, backend, retained task IDs, model observations, action turns, packet-repair turns, attempt count, and terminal status. That state stays in root context unless the user explicitly requests an audit artifact.
 
 ## Shared-checkout discipline
 
@@ -81,4 +91,4 @@ Exactly one task is write-capable for a run. Root orchestration and review remai
 
 ## Versioned packets
 
-Handoffs use `cmro.plan.v3`, `cmro.preflight.v3`, `cmro.worker.v3`, `cmro.review.v3`, and `cmro.final.v3`. Protocol v3 records the backend, actor-contract hash, control-plane pins, every material task-and-turn observation, retained IDs, and root-owned review snapshot evidence. These remain conventions checked by agents, not a code-enforced state machine.
+Handoffs use `cmro.plan.v3`, `cmro.preflight.v3`, `cmro.worker.v3`, `cmro.review.v3`, and `cmro.final.v3`. Protocol v3 records the backend, actor-contract hash, control-plane pins, every material task-and-turn observation, retained IDs, packet repairs, and root-owned snapshot evidence. `validate_packet.py` and `validate_run.py` enforce sanitized record invariants, but task sequencing and evidence collection remain agent-coordinated rather than a durable application state machine.

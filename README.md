@@ -19,8 +19,10 @@ Large coding tasks fail in predictable ways: the plan stays vague, the implement
 - requirement IDs and atomic acceptance criteria before delegation;
 - one model-pinned writer selected by impact and verifiability;
 - a no-write identity preflight before implementation;
+- strict worker/reviewer packet validation against root-owned context before handoff;
 - a separate model-pinned Sol reviewer checking the real artifact;
 - same-writer revision to preserve task context;
+- one separately accounted, no-write format repair when an action response is useful but malformed;
 - three total worker attempts, followed by human escalation; and
 - a root-task final gate before completion.
 
@@ -56,10 +58,10 @@ A native route is accepted only when its surface exposes explicit custom-agent/p
 
 ## Five-minute start
 
-Prerequisites: Python 3.11+, Git, a backed-up or committed target repository, and a current Codex app with the target repository added as its own saved project. The fallback native backend additionally requires the complete staged contract described above; a profile selector alone is insufficient.
+Prerequisites: Python 3.11+, Git, a backed-up or committed target repository, and a current Codex app with the target repository added as its own saved project. The fallback native backend additionally requires the complete staged contract described above; a profile selector alone is insufficient. For a stable installation, clone the versioned release tag instead of mutable `main`:
 
 ```bash
-git clone https://github.com/jeffjhunter/codex-model-router-optimization.git
+git clone --branch v3.0.1 --depth 1 https://github.com/jeffjhunter/codex-model-router-optimization.git
 cd codex-model-router-optimization
 
 python routerctl.py doctor --target /path/to/your/repository
@@ -96,12 +98,23 @@ python routerctl.py manifest
 # Validate a sanitized final protocol-v3 record
 python routerctl.py validate-run --record cmro-final.json
 
+# Validate a worker/reviewer packet against authoritative context
+python routerctl.py validate-packet --packet worker.json --context context.json
+
 # Preview removal, then remove only unchanged installer-owned files
 python routerctl.py uninstall --target /path/to/repo --dry-run
 python routerctl.py uninstall --target /path/to/repo
 ```
 
 The installer rejects unexpected payload files, verifies SHA-256 hashes, refuses symlink/reparse-point destinations, avoids overwriting changed managed files, respects root `AGENTS.override.md` precedence, stages incompatible TOML for manual merge, and records ownership for conservative uninstall behavior. Files edited after installation are preserved rather than deleted.
+
+## Observed Fieldstead pilot
+
+On 2026-07-14, CMRO was dogfooded on **Fieldstead**, a dependency-free off-grid container-home planning app. In one saved Codex project, the run pinned a Sol coordinator, a Terra writer, and a separate Sol reviewer, then reused the same Terra task for two revision cycles. Exact completed turns were checked against local runtime metadata, and every review used matching before/after content snapshots.
+
+The router did not manufacture a success. After three implementation attempts, the reviewer still found two real defects involving unreadable browser storage and deferred focus restoration, so the bounded run ended `needs_human_review`. A subsequent outer hardening pass fixed both issues, added recovery/focus regressions, and finished with 21 passing deterministic tests plus browser QA. The pilot also exposed a CMRO protocol gap: a useful worker response needed a format-only normalization turn, but v3.0.0 could count that turn as implementation. v3.0.1 adds strict packet validation and explicit repair-turn accounting for that failure mode.
+
+This is one dated, locally observed run with saved metadata and matching snapshots. It is not a cryptographic attestation, a comparative model benchmark, or a guarantee that routing produces correct software. See the [full Fieldstead case study](docs/case-studies/fieldstead-pilot.md).
 
 ## What is and is not verified
 
@@ -111,12 +124,14 @@ Static tests do not prove that a live Codex run used the configured model, follo
 
 ## Documentation
 
+- [Documentation index](docs/index.md)
 - [Getting started](docs/getting-started.md)
 - [Architecture and lifecycle](docs/architecture.md)
 - [Routing policy](docs/routing-policy.md)
 - [Configuration and model customization](docs/configuration.md)
 - [Security and trust boundaries](docs/security-model.md)
 - [Evaluation framework](docs/evaluation.md)
+- [Observed Fieldstead pilot](docs/case-studies/fieldstead-pilot.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Design rationale](docs/design-rationale.md)
 - [Examples](examples/prompts.md)

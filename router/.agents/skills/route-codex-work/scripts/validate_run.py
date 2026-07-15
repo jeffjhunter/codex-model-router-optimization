@@ -53,6 +53,14 @@ def validate(value: Any) -> list[str]:
     if not isinstance(identity, dict):
         errors.append("identity must be an object")
         identity = {}
+    uses_explicit_turn_accounting = "packet_repairs" in value or any(
+        isinstance(identity.get(role), dict)
+        and (
+            "action_turn_ids" in identity[role]
+            or "packet_repair_turn_ids" in identity[role]
+        )
+        for role in ("worker", "reviewer")
+    )
     task_ids: list[str] = []
     observed_turn_ids: list[str] = []
     role_turn_ids: dict[str, list[str]] = {}
@@ -112,28 +120,239 @@ def validate(value: Any) -> list[str]:
         errors.append("root, worker, and reviewer task IDs must be distinct")
     if status == "complete" and len(set(observed_turn_ids)) != len(observed_turn_ids):
         errors.append("observed turn IDs must be distinct across actors")
+
+    action_turn_ids: dict[str, list[str]] = {}
+    packet_repair_turn_ids: dict[str, list[str]] = {}
+    if uses_explicit_turn_accounting:
+        for role in ("worker", "reviewer"):
+            actor = identity.get(role)
+            if not isinstance(actor, dict):
+                continue
+            for field, destination in (
+                ("action_turn_ids", action_turn_ids),
+                ("packet_repair_turn_ids", packet_repair_turn_ids),
+            ):
+                turn_ids = actor.get(field)
+                valid_ids = (
+                    isinstance(turn_ids, list)
+                    and all(is_nonempty_string(turn_id) for turn_id in turn_ids)
+                    and len(set(turn_ids)) == len(turn_ids)
+                )
+                if not valid_ids:
+                    errors.append(
+                        f"identity.{role}.{field} must contain unique non-empty strings"
+                    )
+                    continue
+                destination[role] = turn_ids
+
+            actions = action_turn_ids.get(role)
+            repairs = packet_repair_turn_ids.get(role)
+            observed = role_turn_ids.get(role)
+            preflight_turn_id = actor.get("preflight_turn_id")
+            if actions is None or repairs is None:
+                continue
+            overlap = set(actions) & set(repairs)
+            if overlap:
+                errors.append(
+                    f"identity.{role}.action_turn_ids and packet_repair_turn_ids cannot overlap"
+                )
+            if is_nonempty_string(preflight_turn_id) and (
+                preflight_turn_id in actions or preflight_turn_id in repairs
+            ):
+                errors.append(
+                    f"identity.{role} action and packet repair turn IDs must exclude preflight"
+                )
+            if observed is not None:
+                observed_set = set(observed)
+                for field, ids in (
+                    ("action_turn_ids", actions),
+                    ("packet_repair_turn_ids", repairs),
+                ):
+                    if not set(ids) <= observed_set:
+                        errors.append(
+                            f"identity.{role}.{field} must be observed in identity.{role}.turn_ids"
+                        )
+                non_preflight_ids = {
+                    turn_id for turn_id in observed if turn_id != preflight_turn_id
+                }
+                if set(actions) | set(repairs) != non_preflight_ids:
+                    errors.append(
+                        f"identity.{role} explicit turn accounting must classify every "
+                        "non-preflight turn"
+                    )
+            elif actions or repairs:
+                errors.append(
+                    f"identity.{role} action and packet repair turn IDs must be observed "
+                    f"in identity.{role}.turn_ids"
+                )
+
+        all_explicit_turn_ids = [
+            turn_id
+            for role in ("worker", "reviewer")
+            for turn_id in action_turn_ids.get(role, [])
+            + packet_repair_turn_ids.get(role, [])
+        ]
+        if len(all_explicit_turn_ids) != len(set(all_explicit_turn_ids)):
+            errors.append("action and packet repair turn IDs must be distinct across actors")
+
+        worker_actions = action_turn_ids.get("worker")
+        if worker_actions is not None and attempts != len(worker_actions):
+            errors.append("attempts must equal identity.worker.action_turn_ids count")
+        reviewer_actions = action_turn_ids.get("reviewer")
+        if (
+            reviewer_actions is not None
+            and isinstance(attempts, int)
+            and not isinstance(attempts, bool)
+            and len(reviewer_actions) > attempts
+        ):
+            errors.append("reviewer action turns cannot exceed worker attempts")
+
+        packet_repairs = value.get("packet_repairs")
+        if not isinstance(packet_repairs, list):
+            errors.append("packet_repairs must be an array for explicit turn accounting")
+            packet_repairs = []
+        seen_invalid_packets: set[tuple[str, str]] = set()
+        seen_repaired_packets: set[tuple[str, str]] = set()
+        for index, repair in enumerate(packet_repairs):
+            if not isinstance(repair, dict):
+                errors.append(f"packet_repairs[{index}] must be an object")
+                continue
+            required_repair_fields = {
+                "actor_role",
+                "invalid_turn_id",
+                "repaired_turn_id",
+                "mode",
+                "writes",
+                "reason",
+                "snapshot",
+            }
+            missing_repair_fields = sorted(required_repair_fields - repair.keys())
+            unknown_repair_fields = sorted(repair.keys() - required_repair_fields)
+            for field in missing_repair_fields:
+                errors.append(f"packet_repairs[{index}].{field} is required")
+            for field in unknown_repair_fields:
+                errors.append(f"packet_repairs[{index}].{field} is not allowed")
+            actor_role = repair.get("actor_role")
+            if actor_role not in {"worker", "reviewer"}:
+                errors.append(f"packet_repairs[{index}].actor_role must be worker or reviewer")
+                actor_role = None
+            invalid_turn_id = repair.get("invalid_turn_id")
+            if not is_nonempty_string(invalid_turn_id):
+                errors.append(f"packet_repairs[{index}].invalid_turn_id is required")
+            repaired_turn_id = repair.get("repaired_turn_id")
+            if not is_nonempty_string(repaired_turn_id):
+                errors.append(f"packet_repairs[{index}].repaired_turn_id is required")
+            if repair.get("mode") != "format-only":
+                errors.append(f"packet_repairs[{index}].mode must be format-only")
+            if repair.get("writes") is not False:
+                errors.append(f"packet_repairs[{index}].writes must be false")
+            if not is_nonempty_string(repair.get("reason")):
+                errors.append(f"packet_repairs[{index}].reason must be a non-empty string")
+            snapshot = repair.get("snapshot")
+            if not isinstance(snapshot, dict):
+                errors.append(f"packet_repairs[{index}].snapshot must be an object")
+            else:
+                snapshot_fields = {"scope", "before_sha256", "after_sha256", "matched"}
+                for field in sorted(snapshot_fields - snapshot.keys()):
+                    errors.append(f"packet_repairs[{index}].snapshot.{field} is required")
+                for field in sorted(snapshot.keys() - snapshot_fields):
+                    errors.append(f"packet_repairs[{index}].snapshot.{field} is not allowed")
+                before = snapshot.get("before_sha256")
+                after = snapshot.get("after_sha256")
+                if snapshot.get("scope") != "tracked-index-and-untracked-content":
+                    errors.append(f"packet_repairs[{index}].snapshot.scope is unsupported")
+                if not isinstance(before, str) or not SHA256_RE.fullmatch(before):
+                    errors.append(
+                        f"packet_repairs[{index}].snapshot.before_sha256 must be lowercase SHA-256"
+                    )
+                if not isinstance(after, str) or not SHA256_RE.fullmatch(after):
+                    errors.append(
+                        f"packet_repairs[{index}].snapshot.after_sha256 must be lowercase SHA-256"
+                    )
+                if snapshot.get("matched") is not True or before != after:
+                    errors.append(
+                        f"packet_repairs[{index}].snapshot must contain matching digests"
+                    )
+
+            if (
+                actor_role is None
+                or not is_nonempty_string(invalid_turn_id)
+                or not is_nonempty_string(repaired_turn_id)
+            ):
+                continue
+            invalid_key = (actor_role, invalid_turn_id)
+            repaired_key = (actor_role, repaired_turn_id)
+            if invalid_key in seen_invalid_packets:
+                errors.append("packet_repairs allows at most one repair per invalid action packet")
+            seen_invalid_packets.add(invalid_key)
+            if repaired_key in seen_repaired_packets:
+                errors.append("packet_repairs cannot account for a repaired turn more than once")
+            seen_repaired_packets.add(repaired_key)
+            if invalid_turn_id not in action_turn_ids.get(actor_role, []):
+                errors.append(
+                    f"packet_repairs[{index}].invalid_turn_id must reference that actor's "
+                    "action_turn_ids"
+                )
+            if repaired_turn_id not in packet_repair_turn_ids.get(actor_role, []):
+                errors.append(
+                    f"packet_repairs[{index}].repaired_turn_id must reference that actor's "
+                    "packet_repair_turn_ids"
+                )
+
+        for role in ("worker", "reviewer"):
+            recorded_repair_ids = {
+                repaired_turn_id
+                for actor_role, repaired_turn_id in seen_repaired_packets
+                if actor_role == role
+            }
+            if set(packet_repair_turn_ids.get(role, [])) != recorded_repair_ids:
+                errors.append(
+                    f"identity.{role}.packet_repair_turn_ids must each have exactly one "
+                    "packet_repairs record"
+                )
+
     if status == "complete":
         if value.get("worker_id") != identity.get("worker", {}).get("task_id"):
             errors.append("worker_id must match identity.worker.task_id")
         if value.get("reviewer_id") != identity.get("reviewer", {}).get("task_id"):
             errors.append("reviewer_id must match identity.reviewer.task_id")
         worker_turn_ids = role_turn_ids.get("worker", [])
-        if worker_turn_ids and attempts != len(worker_turn_ids) - 1:
+        if (
+            not uses_explicit_turn_accounting
+            and worker_turn_ids
+            and attempts != len(worker_turn_ids) - 1
+        ):
             errors.append("attempts must equal the number of observed worker action turns")
         reviewer_turn_ids = role_turn_ids.get("reviewer", [])
-        if reviewer_turn_ids and attempts != len(reviewer_turn_ids) - 1:
+        if (
+            uses_explicit_turn_accounting
+            and "reviewer" in action_turn_ids
+            and attempts != len(action_turn_ids["reviewer"])
+        ):
+            errors.append("attempts must equal identity.reviewer.action_turn_ids count")
+        elif (
+            not uses_explicit_turn_accounting
+            and reviewer_turn_ids
+            and attempts != len(reviewer_turn_ids) - 1
+        ):
             errors.append("attempts must equal the number of observed reviewer action turns")
 
     review_snapshots = value.get("review_snapshots")
-    if status == "complete" and (not isinstance(review_snapshots, list) or not review_snapshots):
-        errors.append("review_snapshots must contain every accepted review for complete records")
+    reviewer_actions_for_snapshots = action_turn_ids.get("reviewer", [])
+    snapshots_required = status == "complete" or (
+        uses_explicit_turn_accounting and bool(reviewer_actions_for_snapshots)
+    )
+    if snapshots_required and (not isinstance(review_snapshots, list) or not review_snapshots):
+        errors.append("review_snapshots must contain every reviewer action turn")
     elif isinstance(review_snapshots, list):
         snapshot_turn_ids: list[str] = []
         reviewer_turn_ids = role_turn_ids.get("reviewer", [])
         reviewer_preflight = identity.get("reviewer", {}).get("preflight_turn_id")
-        expected_review_turn_ids = {
-            turn_id for turn_id in reviewer_turn_ids if turn_id != reviewer_preflight
-        }
+        expected_review_turn_ids = (
+            set(reviewer_actions_for_snapshots)
+            if uses_explicit_turn_accounting
+            else {turn_id for turn_id in reviewer_turn_ids if turn_id != reviewer_preflight}
+        )
         for index, snapshot in enumerate(review_snapshots):
             if not isinstance(snapshot, dict):
                 errors.append(f"review_snapshots[{index}] must be an object")
@@ -153,7 +372,9 @@ def validate(value: Any) -> list[str]:
                 errors.append(f"review_snapshots[{index}].after_sha256 must be lowercase SHA-256")
             if snapshot.get("matched") is not True or before != after:
                 errors.append(f"review_snapshots[{index}] must contain matching digests")
-        if status == "complete" and set(snapshot_turn_ids) != expected_review_turn_ids:
+        if (status == "complete" or uses_explicit_turn_accounting) and (
+            set(snapshot_turn_ids) != expected_review_turn_ids
+        ):
             errors.append("review_snapshots must cover every reviewer action turn exactly")
         if len(snapshot_turn_ids) != len(set(snapshot_turn_ids)):
             errors.append("review_snapshots cannot duplicate reviewer turn IDs")

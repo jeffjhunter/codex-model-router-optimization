@@ -1,0 +1,11 @@
+{
+  "run_id": "cmro-example-7f3c",
+  "plan_version": 1,
+  "backend": "codex_app_tasks",
+  "actor_id": "task-example-terra-01",
+  "route": "terra_worker",
+  "configured_model": "gpt-5.6-terra",
+  "attempt": 1,
+  "acceptance_ids": ["AC-001", "AC-002", "AC-003", "AC-004"],
+  "allowed_paths": ["src/status.py", "tests/test_status.py", "docs/cli.md"]
+}

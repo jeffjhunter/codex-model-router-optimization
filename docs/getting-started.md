@@ -29,7 +29,7 @@ Clean repositories receive:
 
 - `.codex/config.toml` with a Sol root pin and bounded native-agent settings;
 - Luna, Terra, and Sol reviewer role contracts under `.codex/agents/`;
-- the explicit-only `$route-codex-work` skill, session observer, worktree snapshot, and final-record validator;
+- the explicit-only `$route-codex-work` skill, session observer, worktree snapshot, packet validator, and final-record validator;
 - a marked router block in the active root `AGENTS.md` or `AGENTS.override.md`; and
 - `.codex-model-router/installation.json` for integrity and conservative uninstall.
 
@@ -77,11 +77,19 @@ A healthy app run has this sequence:
 1. Sol root records the contract, score, backend, baseline, and root session evidence.
 2. One model-pinned Luna or Terra task performs a no-write identity preflight.
 3. The root independently verifies the preflight task model, effort, exact turn, and repository CWD.
-4. The retained worker receives the implementation packet, becomes idle after reporting evidence, and has that exact action turn independently verified.
-5. A separate model-pinned Sol task passes its read-only preflight; the root snapshots content, sends review, verifies the exact review turn, and requires an identical post-review snapshot.
-6. Correctable findings return to the same writer task ID and every revision/rereview turn is verified; acceptance then reaches the root final gate.
+4. The retained worker receives the implementation packet, becomes idle after reporting evidence, has that exact action turn independently verified, and has its raw JSON packet validated against root-owned context.
+5. A separate model-pinned Sol task passes its read-only preflight; the root snapshots content, sends review, verifies the exact review turn, requires an identical post-review snapshot, and validates the review packet.
+6. A malformed but otherwise useful action response may receive one same-task, no-write format repair with its own exact-turn evidence and matching content snapshots; it does not consume an implementation attempt.
+7. Correctable findings return to the same writer task ID and every revision/rereview turn is verified; acceptance then reaches the root final gate.
 
-Stop if the selected route mismatches, session evidence is unavailable, the exact saved project cannot be resolved, a reviewer mutates files, or a label-only native spawn is presented as model selection.
+Stop if the selected route mismatches, session evidence is unavailable, the exact saved project cannot be resolved, a reviewer or packet repair mutates files, a repaired packet remains invalid, or a label-only native spawn is presented as model selection.
+
+For sanitized audit artifacts, validate every handoff with authoritative context before validating the final record:
+
+```bash
+python routerctl.py validate-packet --packet worker.json --context worker-context.json
+python routerctl.py validate-run --record cmro-final.json
+```
 
 ## Native fallback
 

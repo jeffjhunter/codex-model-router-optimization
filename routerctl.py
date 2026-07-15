@@ -22,7 +22,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - Python enforces this fi
     raise SystemExit("routerctl requires Python 3.11 or newer.") from exc
 
 
-VERSION = "3.0.0"
+VERSION = "3.0.1"
 ROOT = Path(__file__).resolve().parent
 PAYLOAD = ROOT / "router"
 SOURCE_MANIFEST = PAYLOAD / "MANIFEST.json"
@@ -33,6 +33,7 @@ AGENTS_REL = Path("AGENTS.md")
 AGENTS_OVERRIDE_REL = Path("AGENTS.override.md")
 ADDENDUM_REL = Path("AGENTS.addendum.md")
 RUN_VALIDATOR_REL = Path(".agents/skills/route-codex-work/scripts/validate_run.py")
+PACKET_VALIDATOR_REL = Path(".agents/skills/route-codex-work/scripts/validate_packet.py")
 BEGIN_MARKER = "<!-- codex-model-router:begin -->"
 END_MARKER = "<!-- codex-model-router:end -->"
 
@@ -879,6 +880,23 @@ def command_validate_run(args: argparse.Namespace) -> int:
     return result.returncode
 
 
+def command_validate_packet(args: argparse.Namespace) -> int:
+    source = load_source_manifest()
+    relative = PACKET_VALIDATOR_REL.as_posix()
+    verified_source_bytes(relative, source)
+    command = [sys.executable, str(PAYLOAD / PACKET_VALIDATOR_REL), str(args.packet)]
+    if args.context:
+        command.extend(["--context", str(args.context)])
+    if args.context_json:
+        command.extend(["--context-json", args.context_json])
+    result = subprocess.run(command, text=True, capture_output=True, check=False)
+    if result.stdout:
+        print(result.stdout, end="")
+    if result.stderr:
+        print(result.stderr, end="", file=sys.stderr)
+    return result.returncode
+
+
 def tool_version(command: str, arguments: list[str]) -> tuple[bool, str]:
     executable = shutil.which(command)
     if not executable:
@@ -922,6 +940,7 @@ def command_doctor(args: argparse.Namespace) -> int:
         ".agents/skills/route-codex-work/references/actors.md",
         ".agents/skills/route-codex-work/scripts/observe_session.py",
         ".agents/skills/route-codex-work/scripts/snapshot_worktree.py",
+        ".agents/skills/route-codex-work/scripts/validate_packet.py",
         ".agents/skills/route-codex-work/scripts/validate_run.py",
     }
     missing_backend_paths = sorted(backend_paths - set(source))
@@ -929,7 +948,7 @@ def command_doctor(args: argparse.Namespace) -> int:
         (
             "backend_contract",
             not missing_backend_paths,
-            "actor contracts, session observer, worktree snapshot, and run validator are allowlisted"
+            "actor contracts, session observer, worktree snapshot, and packet/run validators are allowlisted"
             if not missing_backend_paths
             else "missing: " + ", ".join(missing_backend_paths),
         )
@@ -1003,6 +1022,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_run.add_argument("--record", required=True, help="JSON record path, or - for stdin")
     validate_run.set_defaults(handler=command_validate_run)
+
+    validate_packet = subparsers.add_parser(
+        "validate-packet", help="Validate a cmro.worker.v3 or cmro.review.v3 JSON packet"
+    )
+    validate_packet.add_argument("--packet", required=True, help="JSON packet path, or - for stdin")
+    packet_context = validate_packet.add_mutually_exclusive_group(required=True)
+    packet_context.add_argument("--context", help="Authoritative context JSON file")
+    packet_context.add_argument("--context-json", help="Authoritative context as inline JSON")
+    validate_packet.set_defaults(handler=command_validate_packet)
 
     doctor = subparsers.add_parser("doctor", help="Check local prerequisites and payload integrity")
     doctor.add_argument("--target", help="Optional target repository root")

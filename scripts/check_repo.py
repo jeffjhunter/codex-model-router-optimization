@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -16,6 +17,7 @@ OPENAI_YAML = ROOT / "router/.agents/skills/route-codex-work/agents/openai.yaml"
 SESSION_PROBE = ROOT / "router/.agents/skills/route-codex-work/scripts/observe_session.py"
 WORKTREE_SNAPSHOT = ROOT / "router/.agents/skills/route-codex-work/scripts/snapshot_worktree.py"
 RUN_VALIDATOR = ROOT / "router/.agents/skills/route-codex-work/scripts/validate_run.py"
+PACKET_VALIDATOR = ROOT / "router/.agents/skills/route-codex-work/scripts/validate_packet.py"
 ACTOR_CONTRACTS = ROOT / "router/.agents/skills/route-codex-work/references/actors.md"
 
 
@@ -65,8 +67,10 @@ def check_skill() -> None:
         "observe_session.py",
         "snapshot_worktree.py",
         "validate_run.py",
+        "validate_packet.py",
         "cmro.worker.v3",
         "cmro.review.v3",
+        "format-only",
     )
     for value in required_workflow_text:
         if value not in text:
@@ -77,10 +81,12 @@ def check_skill() -> None:
         fail("worktree content snapshot script is missing")
     if not RUN_VALIDATOR.is_file():
         fail("protocol v3 final-record validator is missing")
+    if not PACKET_VALIDATOR.is_file():
+        fail("protocol v3 packet validator is missing")
     if not ACTOR_CONTRACTS.is_file():
         fail("app-task actor contracts are missing")
     actors = ACTOR_CONTRACTS.read_text(encoding="utf-8")
-    for value in ("Identity preflight contract", "Luna writer contract", "Terra writer contract", "Sol reviewer contract"):
+    for value in ("Identity preflight contract", "Luna writer contract", "Terra writer contract", "Sol reviewer contract", "Format-only packet repair contract"):
         if value not in actors:
             fail(f"actor contract file is missing {value!r}")
     yaml = OPENAI_YAML.read_text(encoding="utf-8")
@@ -152,6 +158,9 @@ def check_eval_inventory() -> None:
         "stopped-worker-task",
         "reviewer-mutation",
         "same-id-revision",
+        "packet-format-repair",
+        "packet-repair-second-invalid",
+        "packet-repair-mutation",
         "native-full-contract",
     }
     observed_ids = {item.get("id") for item in scenarios}
@@ -171,6 +180,23 @@ def check_eval_inventory() -> None:
         }:
             fail(f"eval {item.get('id')} has no valid v3 backend expectation")
     print(f"PASS: {len(scenarios)} evaluation scenarios use the v3 model contract")
+
+
+def check_packet_examples() -> None:
+    pairs = (
+        ("examples/worker-report.json", "examples/worker-context.json"),
+        ("examples/review-revise.json", "examples/review-context.json"),
+    )
+    for packet, context in pairs:
+        result = subprocess.run(
+            [sys.executable, str(PACKET_VALIDATOR), str(ROOT / packet), "--context", str(ROOT / context)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode:
+            fail(f"packet example {packet} is invalid: {result.stdout or result.stderr}")
+    print(f"PASS: {len(pairs)} packet examples validate against authoritative context")
 
 
 def check_sensitive_literals() -> None:
@@ -195,6 +221,7 @@ def main() -> None:
     check_skill()
     check_manifest()
     check_eval_inventory()
+    check_packet_examples()
     check_local_links()
     check_sensitive_literals()
     print("Repository checks passed.")

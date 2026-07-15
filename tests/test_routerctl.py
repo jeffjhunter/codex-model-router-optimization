@@ -335,7 +335,7 @@ class RouterCtlTests(unittest.TestCase):
         self.assertTrue(value["passed"])
         self.assertTrue(value["checks"])
         self.assertEqual(value["scope"], "distribution")
-        self.assertEqual(value["version"], "3.0.0")
+        self.assertEqual(value["version"], "3.0.1")
         self.assertTrue(value["limitations"])
 
     def test_doctor_json_labels_distribution_scope(self) -> None:
@@ -344,7 +344,7 @@ class RouterCtlTests(unittest.TestCase):
         value = json.loads(result.stdout)
         self.assertEqual(value["schema"], "cmro.doctor.v1")
         self.assertEqual(value["scope"], "distribution")
-        self.assertEqual(value["version"], "3.0.0")
+        self.assertEqual(value["version"], "3.0.1")
         backend = next(item for item in value["findings"] if item["name"] == "backend_contract")
         self.assertTrue(backend["passed"])
         self.assertTrue(value["limitations"])
@@ -395,7 +395,7 @@ class RouterCtlTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         value = json.loads(result.stdout)
         self.assertEqual(value["scope"], "distribution")
-        self.assertEqual(value["version"], "3.0.0")
+        self.assertEqual(value["version"], "3.0.1")
         self.assertIn(".codex/agents/luna_worker.toml", value["files"])
         self.assertIn(".codex/agents/terra_worker.toml", value["files"])
         self.assertIn(".codex/agents/sol_reviewer.toml", value["files"])
@@ -423,10 +423,69 @@ class RouterCtlTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         self.assertTrue(json.loads(result.stdout)["valid"])
 
+    def test_validate_packet_command_uses_allowlisted_validator_and_context(self) -> None:
+        packet = {
+            "schema": "cmro.worker.v3",
+            "run_id": "cmro-test",
+            "plan_version": 1,
+            "attempt": 1,
+            "worker": {
+                "id": "terra-task",
+                "backend": "codex_app_tasks",
+                "route": "terra_worker",
+                "configured_model": "gpt-5.6-terra",
+            },
+            "status": "done",
+            "summary": "Implemented the scoped file.",
+            "changed_paths": [{"path": "src/app.py", "action": "modified"}],
+            "checks": [
+                {
+                    "command": "python -m unittest",
+                    "exit_code": 0,
+                    "result": "pass",
+                    "evidence": "Focused test passed.",
+                }
+            ],
+            "criteria": [
+                {"ac_id": "AC-001", "status": "pass", "evidence": "Artifact inspected."}
+            ],
+            "blockers": [],
+            "limitations": [],
+        }
+        context = {
+            "run_id": "cmro-test",
+            "plan_version": 1,
+            "backend": "codex_app_tasks",
+            "actor_id": "terra-task",
+            "route": "terra_worker",
+            "configured_model": "gpt-5.6-terra",
+            "attempt": 1,
+            "acceptance_ids": ["AC-001"],
+            "allowed_paths": ["src/**"],
+        }
+        packet_path = self.root / "worker.json"
+        context_path = self.root / "context.json"
+        packet_path.write_text(json.dumps(packet), encoding="utf-8")
+        context_path.write_text(json.dumps(context), encoding="utf-8")
+        result = self.run_cli(
+            "validate-packet",
+            "--packet",
+            str(packet_path),
+            "--context",
+            str(context_path),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertTrue(json.loads(result.stdout)["valid"])
+        self.assertTrue(json.loads(result.stdout)["authoritative_context_bound"])
+
+        unbound = self.run_cli("validate-packet", "--packet", str(packet_path))
+        self.assertEqual(unbound.returncode, 2)
+        self.assertIn("--context", unbound.stderr)
+
     def test_version(self) -> None:
         result = self.run_cli("--version")
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.strip(), "routerctl 3.0.0")
+        self.assertEqual(result.stdout.strip(), "routerctl 3.0.1")
 
     @unittest.skipUnless(hasattr(os, "symlink"), "symlinks unavailable")
     def test_linklike_destination_is_rejected_when_supported(self) -> None:
