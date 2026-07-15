@@ -1,4 +1,4 @@
-schema: "cmro.plan.v2"
+schema: "cmro.plan.v3"
 run_id: "cmro-example-7f3c"
 plan_version: 1
 request: "Add a backward-compatible JSON option to the local status command."
@@ -35,14 +35,20 @@ scope:
   allowed_paths: ["src/status.py", "tests/test_status.py", "docs/cli.md"]
   prohibited_actions: ["publishing", "deployment", "external messages"]
   authority: "local repository only"
+backend:
+  kind: "codex_app_tasks"
+  project_id: "/canonical/saved/project"
+  environment: "local"
+  capability_evidence: ["model-pinned task creation", "completed-turn read", "task follow-up"]
+  actor_contract_sha256: "example-sha256"
 routing:
   coordinator: {route: "root", configured_model: "gpt-5.6-sol"}
   worker: {route: "terra_worker", configured_model: "gpt-5.6-terra"}
   reviewer: {route: "sol_reviewer", configured_model: "gpt-5.6-sol"}
   score: 3
   rationale: "Multi-file behavior, tool use, and regression risk."
-model_observation:
-  root: {status: "verified", value: "gpt-5.6-sol", source: "client session details"}
-  worker: {status: "not_verified", value: null, source: null}
-  reviewer: {status: "not_verified", value: null, source: null}
+identity:
+  root: {control_plane_pinned: true, runtime_observed: true, task_id: "root-task", turn_ids: ["root-turn"], value: "gpt-5.6-sol/xhigh"}
+  worker: {control_plane_pinned: false, runtime_observed: false, turn_ids: []}
+  reviewer: {control_plane_pinned: false, runtime_observed: false, turn_ids: []}
 attempt_limit: 3

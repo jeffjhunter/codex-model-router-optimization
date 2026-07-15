@@ -22,7 +22,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - Python enforces this fi
     raise SystemExit("routerctl requires Python 3.11 or newer.") from exc
 
 
-VERSION = "2.0.0"
+VERSION = "3.0.0"
 ROOT = Path(__file__).resolve().parent
 PAYLOAD = ROOT / "router"
 SOURCE_MANIFEST = PAYLOAD / "MANIFEST.json"
@@ -32,6 +32,7 @@ CONFIG_EXAMPLE_REL = Path(".codex/config.codex-model-router.example.toml")
 AGENTS_REL = Path("AGENTS.md")
 AGENTS_OVERRIDE_REL = Path("AGENTS.override.md")
 ADDENDUM_REL = Path("AGENTS.addendum.md")
+RUN_VALIDATOR_REL = Path(".agents/skills/route-codex-work/scripts/validate_run.py")
 BEGIN_MARKER = "<!-- codex-model-router:begin -->"
 END_MARKER = "<!-- codex-model-router:end -->"
 
@@ -695,7 +696,22 @@ def command_verify(args: argparse.Namespace) -> int:
     checks = check_target(target, source)
     passed = all(check["passed"] for check in checks)
     if args.json:
-        print(json.dumps({"passed": passed, "target": str(target), "checks": checks}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "schema": "cmro.distribution-verification.v1",
+                    "scope": "distribution",
+                    "version": VERSION,
+                    "passed": passed,
+                    "target": str(target),
+                    "checks": checks,
+                    "limitations": [
+                        "Does not inspect Codex app task capabilities, model entitlement, or live runtime identity."
+                    ],
+                },
+                indent=2,
+            )
+        )
     else:
         for check in checks:
             marker = "PASS" if check["passed"] else "FAIL"
@@ -835,6 +851,8 @@ def command_uninstall(args: argparse.Namespace) -> int:
 def command_manifest(args: argparse.Namespace) -> int:
     source = load_source_manifest()
     value = {
+        "schema": "cmro.payload-manifest-view.v1",
+        "scope": "distribution",
         "version": VERSION,
         "payload": str(PAYLOAD),
         "manifest_sha256": sha256_file(SOURCE_MANIFEST),
@@ -842,6 +860,23 @@ def command_manifest(args: argparse.Namespace) -> int:
     }
     print(json.dumps(value, indent=2, sort_keys=True))
     return EXIT_OK
+
+
+def command_validate_run(args: argparse.Namespace) -> int:
+    source = load_source_manifest()
+    relative = RUN_VALIDATOR_REL.as_posix()
+    verified_source_bytes(relative, source)
+    result = subprocess.run(
+        [sys.executable, str(PAYLOAD / RUN_VALIDATOR_REL), str(args.record)],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    if result.stderr:
+        print(result.stderr, end="", file=sys.stderr)
+    return result.returncode
 
 
 def tool_version(command: str, arguments: list[str]) -> tuple[bool, str]:
@@ -864,6 +899,7 @@ def tool_version(command: str, arguments: list[str]) -> tuple[bool, str]:
 
 def command_doctor(args: argparse.Namespace) -> int:
     findings: list[tuple[str, bool, str]] = []
+    source: dict[str, str] = {}
     try:
         source = load_source_manifest()
         findings.append(("payload", True, f"{len(source)} allowlisted files with valid hashes"))
@@ -882,10 +918,50 @@ def command_doctor(args: argparse.Namespace) -> int:
         except RouterError as exc:
             findings.append(("target", False, str(exc)))
 
-    for name, passed, detail in findings:
-        print(f"[{'PASS' if passed else 'WARN'}] {name}: {detail}")
-    print("Model entitlement is not inferred; confirm configured models in your Codex model picker.")
-    return EXIT_OK if all(passed for name, passed, _ in findings if name != "codex") else EXIT_INCOMPLETE
+    backend_paths = {
+        ".agents/skills/route-codex-work/references/actors.md",
+        ".agents/skills/route-codex-work/scripts/observe_session.py",
+        ".agents/skills/route-codex-work/scripts/snapshot_worktree.py",
+        ".agents/skills/route-codex-work/scripts/validate_run.py",
+    }
+    missing_backend_paths = sorted(backend_paths - set(source))
+    findings.append(
+        (
+            "backend_contract",
+            not missing_backend_paths,
+            "actor contracts, session observer, worktree snapshot, and run validator are allowlisted"
+            if not missing_backend_paths
+            else "missing: " + ", ".join(missing_backend_paths),
+        )
+    )
+
+    passed = all(value for name, value, _ in findings if name != "codex")
+    limitations = [
+        "Scope is distribution and local CLI prerequisites only.",
+        "Codex app task tools, saved-project matching, model entitlement, and runtime identity are not inspected.",
+    ]
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "schema": "cmro.doctor.v1",
+                    "scope": "distribution",
+                    "version": VERSION,
+                    "passed": passed,
+                    "findings": [
+                        {"name": name, "passed": value, "detail": detail}
+                        for name, value, detail in findings
+                    ],
+                    "limitations": limitations,
+                },
+                indent=2,
+            )
+        )
+    else:
+        for name, value, detail in findings:
+            print(f"[{'PASS' if value else 'WARN'}] {name}: {detail}")
+        print("Scope: distribution only. App task capabilities and model entitlement are not inferred.")
+    return EXIT_OK if passed else EXIT_INCOMPLETE
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -922,9 +998,16 @@ def build_parser() -> argparse.ArgumentParser:
     manifest = subparsers.add_parser("manifest", help="Print the verified payload manifest")
     manifest.set_defaults(handler=command_manifest)
 
+    validate_run = subparsers.add_parser(
+        "validate-run", help="Validate a sanitized cmro.final.v3 JSON record"
+    )
+    validate_run.add_argument("--record", required=True, help="JSON record path, or - for stdin")
+    validate_run.set_defaults(handler=command_validate_run)
+
     doctor = subparsers.add_parser("doctor", help="Check local prerequisites and payload integrity")
     doctor.add_argument("--target", help="Optional target repository root")
     doctor.add_argument("--allow-non-git", action="store_true")
+    doctor.add_argument("--json", action="store_true", help="Emit machine-readable distribution findings")
     doctor.set_defaults(handler=command_doctor)
     return parser
 

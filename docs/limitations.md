@@ -1,35 +1,41 @@
 # Limitations
 
-## Native orchestration is best effort
+## Orchestration remains instruction-driven
 
-Codex provides custom agents, skills, subagent controls, and project guidance. CMRO expresses a lifecycle through those primitives, but native instructions do not enforce every transition as application code would. Same-worker follow-up, reviewer reuse, attempt counting, and the root gate depend on the coordinator following the protocol.
+Model-pinned task creation makes model selection explicit, but skills and prompts still coordinate the lifecycle. Same-writer follow-up, reviewer reuse, attempt counting, and the root gate are not a durable application state machine. Use an SDK controller when transition enforcement, crash recovery, auditable persistence, or machine-validated schemas are mandatory.
 
-Use an SDK controller when transition enforcement, durable recovery, auditable persistence, or machine-validated schemas are mandatory.
+## App backend availability varies
+
+The preferred backend needs callable saved-project listing, model-pinned task creation, completed-turn reading, and task follow-up in the current Codex app environment. The target must be registered as the exact saved project. If those capabilities are missing, CMRO can use native custom agents only when the client provides explicit profile selection, no-write first turns, status/read with exact completed turn IDs, retained-agent follow-up, and session observation; otherwise it stops before edits.
 
 ## No hard ordinary-turn timeout
 
-The profile does not claim a hard timeout for ordinary subagent turns. The Codex config field for CSV-spawn job runtime is not a general agent-turn deadline. Slow or stalled handoffs may require user or root intervention.
+CMRO does not claim a hard timeout for ordinary task turns. Slow or stalled handoffs may require inspection or deliberate interruption.
 
-## Reviewer read-only is not absolute isolation
+## Reviewer read-only is behavioral
 
-A custom reviewer requests a read-only sandbox and is behaviorally prohibited from writing. Parent live permission overrides can still change the effective sandbox. Tool-specific external permissions may also differ.
+The reviewer task is instructed to remain read-only, and the role file requests a read-only sandbox where applicable. Parent permissions or task-surface defaults can still provide write-capable tools. The root compares content snapshots around every review. Those snapshots cover the Git index and raw contents of tracked and non-ignored untracked artifacts; ignored files and nested submodule contents remain outside their declared scope.
 
-## Configuration is not runtime model proof
+## Session metadata is local and evolving
 
-`routerctl` validates exact Sol/Luna/Terra configuration and file integrity. It cannot know which models are entitled or actually selected for a session. A prompt label, thread name, or agent self-report is insufficient. Verified model-routing claims require independent client/session evidence; if the client does not expose it, the run remains `not_verified`.
+`observe_session.py` reads only local `session_meta` and `turn_context` records and emits no conversation content. The local JSONL layout is still a product compatibility surface, not a CMRO-owned API. Missing or changed metadata produces `not_verified` and stops the run.
 
-## Tests validate distribution behavior
+## Configuration is not runtime proof
 
-The automated tests exercise installer, verifier, manifest, config, path, ownership, and release behavior. They do not prove route-selection quality, reviewer accuracy, cost reduction, or universal workflow compliance. Those claims require dated behavioral evaluations.
+`routerctl` proves intended files and hashes. A model pin passed at task creation proves selection intent. Final verification additionally requires the resulting session's observed model, effort, task ID, and repository CWD. Task names, titles, prompts, filenames, and self-reports are insufficient.
+
+## Static tests do not prove optimization
+
+The automated suite covers installer behavior, payload integrity, session-probe parsing, and repository contracts. It does not prove routing quality, reviewer accuracy, cost reduction, latency improvement, or universal workflow compliance. Publish those claims only from dated, reproducible observed runs.
 
 ## Shared working trees remain shared
 
-The one-writer rule avoids intentional agent collisions; it cannot prevent unrelated processes or humans from editing simultaneously. Baseline and final-diff checks remain necessary.
+The one-writer rule avoids intentional collisions; it cannot prevent unrelated people, processes, or dormant tasks from editing. Baseline, status, and final-diff checks remain necessary.
 
 ## Exact verification treats customization as drift
 
-Installed managed agent and skill files must match the source distribution. This catches silent changes but means target-local prompt customization fails verification. Customize the source payload, regenerate its manifest, test it, and install from that fork.
+Installed managed files must match the source distribution. Customize the source payload, regenerate its manifest, test it, and install from that fork.
 
-## User-approved side effects are still risky
+## Stronger models do not expand authority
 
-Routing to Terra and adding adversarial Sol review improves analysis; it does not make deployments, migrations, billing changes, credential operations, or destructive actions harmless. Use explicit approvals, reversible stages, backups, and platform-native safeguards.
+Routing to Terra and adding Sol review does not make deployments, migrations, billing changes, credential operations, or destructive actions harmless. Keep explicit approvals, reversible stages, backups, and platform safeguards.

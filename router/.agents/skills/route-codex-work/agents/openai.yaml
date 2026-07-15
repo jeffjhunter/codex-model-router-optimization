@@ -1,7 +1,7 @@
 interface:
   display_name: "Route Codex Work"
-  short_description: "Route Sol through Luna or Terra and Sol review"
-  default_prompt: "Use $route-codex-work to plan, route, verify, and review this task with evidence."
+  short_description: "Run verified Sol, Luna/Terra, Sol routing"
+  default_prompt: "Use $route-codex-work to plan this request, run a model-pinned Luna or Terra task, and obtain independent Sol review with runtime evidence."
 
 policy:
   allow_implicit_invocation: false

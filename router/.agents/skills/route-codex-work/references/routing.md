@@ -1,6 +1,6 @@
 # Routing policy
 
-Use the least expensive model that safely covers the task. Output length is not a risk signal by itself. CMRO has two write routes—Luna and Terra—and one independent Sol review route. The root coordinator is Sol.
+Use the least expensive model that safely covers the task. Output length is not a risk signal by itself. CMRO has two write routes—Luna and Terra—and one independent Sol review route. The root coordinator is Sol. Route selection and route launch are separate decisions: scoring chooses the model, while the backend must prove it actually selected that model.
 
 ## Luna worker
 
@@ -39,7 +39,11 @@ Give one point for each: material ambiguity; several dependent files or steps; t
 
 ## Model identity gate
 
-Configuration is not runtime proof. Before delegation, the root records the expected model for each role. Before final acceptance, it must record independent session or UI evidence that the root/reviewer ran as Sol and the writer ran as the selected Luna or Terra route. If the current client does not expose that evidence, set model observation to `not_verified` and return `needs_human_review`; never relabel a generic subagent as a model-specific route.
+Configuration is not runtime proof. Before delegation, the root records the expected model for each role. Before final acceptance, it must record independent session or UI evidence that the root/reviewer ran as Sol and the writer ran as the selected Luna or Terra route.
+
+Prefer the Codex app task backend when it can create a task with an explicit model and reasoning pin in the exact saved project, read that task, and send follow-ups to the retained task ID. Start with a no-write identity preflight and verify the resulting session before implementation.
+
+Use native custom agents only when the spawn-tool schema has an explicit custom-agent/profile/type selector. A route-like `task_name`, thread title, prompt claim, custom-agent filename, or self-report does not select or prove a model. If neither backend provides explicit selection plus independent evidence, set model observation to `not_verified` and return `needs_human_review`.
 
 ## Escalation rules
 

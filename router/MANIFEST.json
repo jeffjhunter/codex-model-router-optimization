@@ -1,15 +1,19 @@
 {
   "files": {
-    ".agents/skills/route-codex-work/SKILL.md": "06e44d6e2e0f139a1a8053239cb9f6239f1d0989dcd296af7480b9f6b78d7508",
-    ".agents/skills/route-codex-work/agents/openai.yaml": "20a6b95085381fca5b3ce035c3dba33a7cafc4d98c3e7484954119832666b1d2",
-    ".agents/skills/route-codex-work/references/protocol.md": "64a3d688dbab1814e19701dc89d036b88a3468677da9ded4990be64a8bfd2605",
-    ".agents/skills/route-codex-work/references/routing.md": "c7cf4f89013bec2c8cfbea8a4fbfbd2a3237400eb1971a64ecaffe3ca48a5667",
-    ".codex/agents/luna_worker.toml": "b6450de4471e6c4f3d1fabfa63e11be9b0731ad114cf1485d0d27083d6ee0096",
-    ".codex/agents/sol_reviewer.toml": "614cf8bc85bfc953871390d993205eb770b7504ff22418d6529ae77097f3d041",
-    ".codex/agents/terra_worker.toml": "235acd36127c292ea766b778179341d2c433a1069b26ad7568b4734848f1e743",
+    ".agents/skills/route-codex-work/SKILL.md": "ca11647e78dfcb7097b188a618e3e2a4c81c6d67abde217bf8cea329c9260612",
+    ".agents/skills/route-codex-work/agents/openai.yaml": "96de4069291939038202925ea3b28fbfd3e2500b490687fb8d7b0bfebed35146",
+    ".agents/skills/route-codex-work/references/actors.md": "9274ecc375235609f5892f986659e513938863dc82d388d116472cd59ca1da9d",
+    ".agents/skills/route-codex-work/references/protocol.md": "3fc103c55219c5982cf491d56f41a19d5c84ec09fba8b9e6652d1642bbaa973a",
+    ".agents/skills/route-codex-work/references/routing.md": "5a7b98774dc8cdce1440d9e6b92335f9b247434acc571c29689f4db62a823ffb",
+    ".agents/skills/route-codex-work/scripts/observe_session.py": "98f04fdd29c2c5c0da8651e9cf24109dea619d5cc34029f0a3ccb0322def7cae",
+    ".agents/skills/route-codex-work/scripts/snapshot_worktree.py": "383a85d6eb15555f244801af36a5e563969cb611c9124d4acf50cecaf6cbed6d",
+    ".agents/skills/route-codex-work/scripts/validate_run.py": "1fcfdbc76869452e43a4b58df8c1ad5439710e4113cf232307ce1f2a1f21fbf6",
+    ".codex/agents/luna_worker.toml": "a02b5cdadce1d07195cb09710307bdddfa488a726bb8c13614855a2c9d9a4df0",
+    ".codex/agents/sol_reviewer.toml": "b475d2cab5a245dc066601709a982131c63d6737568994fa2b3d6e801bc19171",
+    ".codex/agents/terra_worker.toml": "d908d8c3e33bbcd8f15e81eddaffbdf387e2512319817c292ea903ff36df89a0",
     ".codex/config.toml": "6e61859a5fb5a9cda7d1a0b608be91a445e325100ecc8bb6fa1afd43e8a55f09",
-    "AGENTS.addendum.md": "06b1c709e5eb8fa98c950149e6484ad56570632e03d8091d0eafcea96da48b4a"
+    "AGENTS.addendum.md": "a329701fb8bebc703a42bf319adf29263068dcf4c9048dcfb2dce92cd0d64872"
   },
   "format": 1,
-  "version": "2.0.0"
+  "version": "3.0.0"
 }

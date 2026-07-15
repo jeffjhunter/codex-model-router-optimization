@@ -10,7 +10,7 @@ CMRO is an independently written community implementation. It does not redistrib
 
 ## OpenAI and Codex
 
-CMRO uses public Codex extension surfaces documented by OpenAI, including project-scoped custom agents, skills, `AGENTS.md`, and project configuration. OpenAI did not create, sponsor, certify, or endorse this repository.
+CMRO uses Codex task orchestration capabilities and public extension surfaces documented by OpenAI, including project-scoped custom agents, skills, `AGENTS.md`, and project configuration. OpenAI did not create, sponsor, certify, or endorse this repository.
 
 “OpenAI,” “Codex,” and model names are trademarks or product names of their respective owner. Their use here identifies compatibility and does not imply affiliation.
 
