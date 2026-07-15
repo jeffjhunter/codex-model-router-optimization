@@ -1,12 +1,14 @@
 # Credits and provenance
 
-## Concept inspiration
+## Concept inspiration and support
 
 This project was inspired by Matt Farmer’s article, [“Codex Model Routing: Build a Sol–Terra Review Loop”](https://mattfarmer.ai/codex-model-routing), published by [Matt Farmer AI](https://mattfarmer.ai/matt-farmer) on July 13, 2026.
 
 Matt’s article presents a practical coordinator–worker–reviewer pattern in which a strong coordinator plans work, a routed worker produces the artifact, an independent reviewer checks evidence, and bounded revision either succeeds or escalates to a person. That operating idea motivated this project.
 
-CMRO is an independently written community implementation. It does not redistribute Matt Farmer’s downloadable package and is not affiliated with or endorsed by Matt Farmer or Matt Farmer AI.
+Matt Farmer has since reviewed the project and expressed his support for CMRO. We are grateful for both the original operating idea and his encouragement.
+
+CMRO remains an independently written and maintained community implementation. It does not redistribute Matt Farmer’s downloadable package.
 
 ## OpenAI and Codex
 

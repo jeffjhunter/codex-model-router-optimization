@@ -10,7 +10,7 @@ Cost-aware Sol → Luna/Terra → Sol model routing for Codex, guarded by runtim
 Codex Model Router Optimization (CMRO) is a repo-scoped Codex skill with two fail-closed orchestration backends. In the Codex app, it creates explicitly model-pinned tasks in the same saved local project. On native clients, it can use custom agents only when the surface supports explicit profile selection, staged no-write preflight, completed-turn reads, retained-agent follow-up, and session observation. Sol defines success and owns the final gate, Luna handles clear repeatable work, Terra handles everyday multi-file and tool-heavy work, and a separate Sol task reviews the evidence. Failed criteria return to the retained Luna/Terra writer for at most three attempts.
 
 > [!IMPORTANT]
-> CMRO is an independent community project. It is not affiliated with or endorsed by OpenAI or Matt Farmer. It is not an API gateway, network proxy, deterministic scheduler, or hard security boundary.
+> CMRO is an independent community project inspired by Matt Farmer’s Sol–Terra review-loop concept and supported by Matt Farmer. It is not affiliated with or endorsed by OpenAI. It is not an API gateway, network proxy, deterministic scheduler, or hard security boundary.
 
 ## Why this exists
 
@@ -138,7 +138,7 @@ Static tests do not prove that a live Codex run used the configured model, follo
 
 ## Credits
 
-The Sol → Luna/Terra → Sol pattern was inspired by Matt Farmer’s article, [“Codex Model Routing: Build a Sol–Terra Review Loop”](https://mattfarmer.ai/codex-model-routing). This repository is an independently written implementation with its own installer, verifier, contracts, and safety design. Read [CREDITS.md](CREDITS.md) for the full attribution.
+The Sol → Luna/Terra → Sol pattern was inspired by Matt Farmer’s article, [“Codex Model Routing: Build a Sol–Terra Review Loop”](https://mattfarmer.ai/codex-model-routing). Matt has since reviewed the project and expressed his support for CMRO. This repository remains an independently written and maintained implementation with its own installer, verifier, contracts, and safety design. Read [CREDITS.md](CREDITS.md) for the full attribution.
 
 ## Contributing
 
