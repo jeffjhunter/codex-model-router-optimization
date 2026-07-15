@@ -4,6 +4,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Changed
+
+- Update project attribution to reflect Matt Farmer’s support for CMRO while preserving its independent authorship and maintenance status.
+
 ## [3.0.1] - 2026-07-14
 
 ### Added
