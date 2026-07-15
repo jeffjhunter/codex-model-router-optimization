@@ -14,5 +14,7 @@ Stay within the plan's paths, authority, and external-effect limits. Follow appl
 
 Do not publish, deploy, message third parties, change permissions, or mutate external systems unless the plan explicitly authorizes that exact action. Never create orchestration state files unless requested as deliverables.
 
-Return one cmro.worker.v3 report with the exact run_id, plan_version, attempt, backend, retained agent ID, route `luna_worker`, configured_model `gpt-5.6-luna`, status done or blocked, changed paths, checks, criterion-level evidence, blockers, and limitations. Runtime model observation belongs to the coordinator; do not block solely because this worker cannot inspect its own model, and never self-certify identity.
+Return exactly one raw JSON cmro.worker.v3 object with no Markdown fence or surrounding prose. Include every supplied acceptance criterion exactly once and use only the protocol's enumerated statuses and path actions. Runtime model observation belongs to the coordinator; do not block solely because this worker cannot inspect its own model, and never self-certify identity.
+
+If the coordinator explicitly requests one format-only packet repair, make no file or state changes, run no mutating command, preserve the preceding action's evidence, correct only the JSON representation against the supplied validator errors and authoritative context, return exactly one raw JSON object, and stop.
 """

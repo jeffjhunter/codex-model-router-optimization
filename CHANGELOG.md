@@ -4,6 +4,25 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-07-14
+
+### Added
+
+- Add strict `cmro.worker.v3` and `cmro.review.v3` packet validation against root-owned run, plan, actor, route/model, acceptance, attempt, and allowed-path context.
+- Add one bounded, same-task, no-write format-repair contract with exact-turn observation and matching content snapshots.
+- Add explicit action-turn and packet-repair accounting, including matching no-write content snapshots, to sanitized final records while preserving legacy protocol-v3 compatibility.
+- Add a candid Fieldstead pilot case study covering the observed Sol -> Terra -> Sol topology, real review findings, fail-closed terminal result, outer fixes, and limitations.
+
+### Fixed
+
+- Prevent format-only packet repair turns from consuming the three-attempt implementation budget or requiring their own review snapshot.
+- Reject malformed, stale, actor-mismatched, out-of-scope, incomplete, or internally contradictory packets before handoff.
+
+### Changed
+
+- Require worker and reviewer task responses to contain exactly one raw JSON object using literal actor templates.
+- Extend `routerctl`, repository checks, release contents, examples, and evaluation scenarios for packet validation and repair accounting.
+
 ## [3.0.0] - 2026-07-14
 
 ### Fixed
@@ -44,7 +63,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Windows, macOS, and Linux CI; deterministic release ZIPs; checksums; and build provenance attestations.
 - Architecture, configuration, security, troubleshooting, evaluation, contribution, support, and release documentation.
 
-[Unreleased]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v3.0.0...HEAD
-[3.0.0]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v2.0.0...v3.0.0
-[2.0.0]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v1.0.0...v2.0.0
+[Unreleased]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/63bfbc8...v3.0.1
+[3.0.0]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/71dcead...63bfbc8
+[2.0.0]: https://github.com/jeffjhunter/codex-model-router-optimization/compare/v1.0.0...71dcead
 [1.0.0]: https://github.com/jeffjhunter/codex-model-router-optimization/releases/tag/v1.0.0

@@ -21,6 +21,7 @@ REQUIRED_ARCHIVE_MEMBERS = {
     "router/.agents/skills/route-codex-work/references/actors.md",
     "router/.agents/skills/route-codex-work/scripts/observe_session.py",
     "router/.agents/skills/route-codex-work/scripts/snapshot_worktree.py",
+    "router/.agents/skills/route-codex-work/scripts/validate_packet.py",
     "router/.agents/skills/route-codex-work/scripts/validate_run.py",
 }
 

@@ -20,6 +20,7 @@ CMRO separates user guidance from the compact instructions installed into Codex.
 ## Measure and maintain it
 
 - [Evaluation](evaluation.md): routing and review quality metrics.
+- [Fieldstead pilot](case-studies/fieldstead-pilot.md): an observed routed run, honest failure, outer fixes, and protocol lessons.
 - [Releasing](releasing.md): reproducible archives, checksums, tags, and attestations.
 - [Examples](../examples/prompts.md): suggested pilots and expected routes.
 

@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If this project helps your work, cite the repository and credit the concept inspiration documented in CREDITS.md."
 title: "Codex Model Router Optimization"
 type: software
-version: 3.0.0
+version: 3.0.1
 date-released: 2026-07-14
 authors:
   - family-names: "Hunter"

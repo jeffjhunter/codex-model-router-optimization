@@ -2,7 +2,7 @@
 
 ## Orchestration remains instruction-driven
 
-Model-pinned task creation makes model selection explicit, but skills and prompts still coordinate the lifecycle. Same-writer follow-up, reviewer reuse, attempt counting, and the root gate are not a durable application state machine. Use an SDK controller when transition enforcement, crash recovery, auditable persistence, or machine-validated schemas are mandatory.
+Model-pinned task creation makes model selection explicit, but skills and prompts still coordinate the lifecycle. CMRO machine-validates sanitized worker, reviewer, and final records and distinguishes action turns from format-only repairs. Same-writer follow-up, reviewer reuse, crash recovery, evidence collection, and the root gate are still not a durable application state machine. Use an SDK controller when transition enforcement, auditable persistence, or process-level crash recovery is mandatory.
 
 ## App backend availability varies
 

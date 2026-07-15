@@ -20,13 +20,13 @@ The coordinator creates a Terra/high task with the no-write preflight contract. 
 
 Only then does the root send the Terra actor contract and implementation plan to the retained task. The worker implements the flag and tests, then returns a structured report with commands, exits, changed paths, and limitations. After that turn is idle, the coordinator captures and independently verifies its exact completed turn before accepting the report.
 
-See [worker-report.yaml](worker-report.yaml).
+See the validator-ready [worker packet](worker-report.json) and [authoritative worker context](worker-context.json).
 
 ## 3. Independent review
 
 After the writer is idle, a separate Sol/xhigh task passes its own read-only identity preflight. The coordinator takes a content snapshot and then sends the review contract. The reviewer inspects the diff and reruns focused tests. It finds that redirected text output changed its final newline, marks backward compatibility failed, and requests the observable old behavior—not a prescribed code edit. The coordinator verifies the exact completed review turn and requires the post-review snapshot digest to match.
 
-See [review-revise.yaml](review-revise.yaml).
+See the validator-ready [review packet](review-revise.json) and [authoritative reviewer context](review-context.json).
 
 ## 4. Same-worker revision
 
